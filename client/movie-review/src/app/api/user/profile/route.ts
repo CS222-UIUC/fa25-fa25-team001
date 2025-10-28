@@ -1,31 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { updateUserProfile, getUserProfile } from '../server_actions';
+import { NextResponse } from 'next/server';
 
-export async function PUT(request: NextRequest) {
-  try {
-    const data = await request.json();
-    const result = await updateUserProfile(data);
+// Deprecated REST route: profile operations are now handled via server actions in `src/actions/user.ts`.
+const message = 'Deprecated: This REST endpoint has been removed. Use server actions instead.';
 
-    if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
-    }
-
-    return NextResponse.json({ success: true, user: result.user });
-  } catch (error) {
-    console.error('Profile update API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+export function GET() {
+  return NextResponse.json({ error: message }, { status: 410 });
 }
 
-export async function GET() {
-  try {
-    const result = await getUserProfile();
-    if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 401 });
-    }
-    return NextResponse.json({ success: true, user: result.user });
-  } catch (error) {
-    console.error('Profile get API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+export function PUT() {
+  return NextResponse.json({ error: message }, { status: 410 });
 }

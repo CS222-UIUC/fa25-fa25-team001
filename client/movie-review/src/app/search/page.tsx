@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 interface Movie {
@@ -17,56 +17,50 @@ interface User {
   profilePicture?: string;
 }
 
-export default function SearchPage() {
+// Stable mock data
+const mockMovies: Movie[] = [
+  { id: '1', title: 'The Dark Knight', year: 2008, rating: 9.0 },
+  { id: '2', title: 'Inception', year: 2010, rating: 8.8 },
+  { id: '3', title: 'Interstellar', year: 2014, rating: 8.6 },
+  { id: '4', title: 'The Matrix', year: 1999, rating: 8.7 },
+  { id: '5', title: 'Pulp Fiction', year: 1994, rating: 8.9 },
+];
+
+const mockUsers: User[] = [
+  { id: '1', username: 'moviebuff123', profilePicture: '/default.jpg' },
+  { id: '2', username: 'cinemafan', profilePicture: '/default.jpg' },
+  { id: '3', username: 'filmcritic', profilePicture: '/default.jpg' },
+];
+
+function SearchPageInner() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
-  
+
   const [searchQuery, setSearchQuery] = useState(query);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'movies' | 'users'>('movies');
 
-  // Mock data for demonstration
-  const mockMovies: Movie[] = [
-    { id: '1', title: 'The Dark Knight', year: 2008, rating: 9.0 },
-    { id: '2', title: 'Inception', year: 2010, rating: 8.8 },
-    { id: '3', title: 'Interstellar', year: 2014, rating: 8.6 },
-    { id: '4', title: 'The Matrix', year: 1999, rating: 8.7 },
-    { id: '5', title: 'Pulp Fiction', year: 1994, rating: 8.9 },
-  ];
-
-  const mockUsers: User[] = [
-    { id: '1', username: 'moviebuff123', profilePicture: '/default.jpg' },
-    { id: '2', username: 'cinemafan', profilePicture: '/default.jpg' },
-    { id: '3', username: 'filmcritic', profilePicture: '/default.jpg' },
-  ];
+  const performSearch = useCallback(async (searchTerm: string) => {
+    setLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 500));
+    const filteredMovies = mockMovies.filter(movie =>
+      movie.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const filteredUsers = mockUsers.filter(user =>
+      user.username.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setMovies(filteredMovies);
+    setUsers(filteredUsers);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     if (query) {
       performSearch(query);
     }
-  }, [query]);
-
-  const performSearch = async (searchTerm: string) => {
-    setLoading(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Filter mock data based on search term
-    const filteredMovies = mockMovies.filter(movie =>
-      movie.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    
-    const filteredUsers = mockUsers.filter(user =>
-      user.username.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    setMovies(filteredMovies);
-    setUsers(filteredUsers);
-    setLoading(false);
-  };
+  }, [query, performSearch]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,5 +207,13 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-gray-500">Loading search…</div>}>
+      <SearchPageInner />
+    </Suspense>
   );
 }
