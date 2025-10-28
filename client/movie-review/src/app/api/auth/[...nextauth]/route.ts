@@ -38,6 +38,7 @@ export const authOptions: NextAuthOptions = {
             id: String(user.id),
             email: user.email,
             name: user.username,
+            image: user.profilePicture,
           };
         }
         return null;
@@ -49,6 +50,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.image = user.image;
       }
       return token;
     },
@@ -58,6 +60,7 @@ export const authOptions: NextAuthOptions = {
         user: {
           ...session.user,
           id: token.id as string,
+          image: token.image as string,
         },
       };
     },

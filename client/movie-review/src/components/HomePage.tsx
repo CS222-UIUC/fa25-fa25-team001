@@ -1,5 +1,7 @@
 "use client";
 
+import Link from 'next/link';
+
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
@@ -12,9 +14,18 @@ export default function HomePage() {
           <p className="text-xl text-gray-300 mb-8">
             Discover and share your thoughts on the latest films
           </p>
-          <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
-            Create an Account
-          </button>
+          <div className="flex gap-4">
+            <Link href="/auth/signin">
+              <button className="px-8 py-4 bg-gray-600 hover:bg-gray-700 rounded-lg font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
+                Sign In
+              </button>
+            </Link>
+            <Link href="/auth/signup">
+              <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
+                Create an Account
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
 
