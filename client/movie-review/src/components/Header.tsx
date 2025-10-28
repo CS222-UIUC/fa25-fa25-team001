@@ -56,6 +56,12 @@ export default function Header() {
                     {/* Navigation */}
                     <nav className="flex items-center space-x-4">
                         <Link
+                            href="/profile"
+                            className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-bold transition-colors"
+                        >
+                            Profile
+                        </Link>
+                        <Link
                             href="/signin"
                             className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-bold transition-colors"
                         >
