@@ -9,10 +9,10 @@ export default function HomePage() {
       <div className="container mx-auto px-8 py-20">
         <div className="max-w-2xl">
           <h1 className="text-7xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            Movie Reviews
+            Media Reviews
           </h1>
           <p className="text-xl text-gray-300 mb-8">
-            Discover and share your thoughts on the latest films
+            Discover and share your thoughts on movies, TV shows, and games
           </p>
           <div className="flex gap-4">
             <Link href="/auth/signin">
