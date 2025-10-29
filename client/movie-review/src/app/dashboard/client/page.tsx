@@ -12,8 +12,9 @@ export default function Home() {
                     {JSON.stringify(session)}
                 </pre>
                 <button
-          onClick={() => {
-            signOut();
+          onClick={async () => {
+            await signOut({ redirect: false });
+            window.location.href = '/';
           }}
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
         >
