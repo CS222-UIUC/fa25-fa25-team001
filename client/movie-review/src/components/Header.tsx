@@ -74,7 +74,7 @@ export default function Header() {
                     {/* Logo/Brand */}
                     <div className="flex items-center">
                         <Link href="/" className="text-xl font-bold text-gray-900 hover:text-indigo-600 transition-colors">
-                            MovieReview
+                            Media Review
                         </Link>
                     </div>
 

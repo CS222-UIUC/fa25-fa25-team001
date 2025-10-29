@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getUserProfile, updateUserProfile } from "@/actions/user";
 import { uploadProfilePicture } from "@/actions/upload";
+import PlatformConnections from "@/components/PlatformConnections";
 
 export default function Profile() {
   const { data: session } = useSession();
@@ -231,6 +232,11 @@ export default function Profile() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Platform Connections */}
+        <div className="mt-8">
+          <PlatformConnections />
         </div>
       </div>
     </div>
