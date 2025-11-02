@@ -1,9 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function ProfilePage() {
-  const [activeTab, setActiveTab] = useState('home');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get('tab') || 'home';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+
+  // Sync state with URL on mount and when URL changes
+  useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
+
+  // Update URL when tab changes
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    router.push(`/profile?tab=${tab}`, { scroll: false });
+  };
 
   // Mock data - will be replaced with real data later
   const user = {
@@ -43,6 +58,86 @@ export default function ProfilePage() {
     { id: 2, username: 'cinephile', followers: 230, profilePicture: '/default.jpg' },
     { id: 3, username: 'filmcritic', followers: 512, profilePicture: '/default.jpg' },
     { id: 4, username: 'popculture', followers: 89, profilePicture: '/default.jpg' },
+  ];
+
+  const activities = [
+    { 
+      id: 1, 
+      type: 'followed', 
+      username: 'Gio52', 
+      timestamp: '3d',
+      action: 'followed'
+    },
+    { 
+      id: 2, 
+      type: 'followed', 
+      username: 'luca', 
+      timestamp: '3d',
+      action: 'followed'
+    },
+    { 
+      id: 3, 
+      type: 'followed', 
+      username: 'Nate', 
+      timestamp: '3d',
+      action: 'followed'
+    },
+    { 
+      id: 4, 
+      type: 'watchlist', 
+      movieTitle: 'Girl Picture', 
+      movieImage: '/placeholder-movie.jpg',
+      timestamp: '4d',
+      action: 'added to watchlist'
+    },
+    { 
+      id: 5, 
+      type: 'followed', 
+      username: 'romy', 
+      timestamp: '7d',
+      action: 'followed'
+    },
+    { 
+      id: 6, 
+      type: 'watched', 
+      movieTitle: 'Gianmarco Soresi: Thief of Joy',
+      movieYear: '2025',
+      movieImage: '/placeholder-movie.jpg',
+      rating: 4.5,
+      reviewText: 'gianmarco 4ever',
+      likes: 43,
+      timestamp: '14d',
+      action: 'watched'
+    },
+    { 
+      id: 7, 
+      type: 'watchlist', 
+      movieTitle: 'Coherence', 
+      movieImage: '/placeholder-movie.jpg',
+      timestamp: '17d',
+      action: 'added to watchlist'
+    },
+    { 
+      id: 8, 
+      type: 'listed', 
+      listName: 'movies',
+      movieCount: 3,
+      movies: [
+        { id: 1, image: '/placeholder-movie.jpg', title: 'School of Rock' },
+        { id: 2, image: '/placeholder-movie.jpg', title: 'Brokeback Mountain' },
+        { id: 3, image: '/placeholder-movie.jpg', title: 'Hitch' }
+      ],
+      likes: 4,
+      timestamp: '19d',
+      action: 'listed'
+    },
+    { 
+      id: 9, 
+      type: 'followed', 
+      username: 'emmalwooten', 
+      timestamp: '1mo',
+      action: 'followed'
+    }
   ];
 
   const renderStars = (rating: number) => {
@@ -111,7 +206,7 @@ export default function ProfilePage() {
           <div className="border-b border-gray-200">
             <nav className="flex">
               <button
-                onClick={() => setActiveTab('home')}
+                onClick={() => handleTabChange('home')}
                 className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors ${
                   activeTab === 'home'
                     ? 'border-indigo-600 text-indigo-600'
@@ -121,7 +216,7 @@ export default function ProfilePage() {
                 home
               </button>
               <button
-                onClick={() => setActiveTab('profile')}
+                onClick={() => handleTabChange('profile')}
                 className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors ${
                   activeTab === 'profile'
                     ? 'border-indigo-600 text-indigo-600'
@@ -131,7 +226,7 @@ export default function ProfilePage() {
                 profile
               </button>
               <button
-                onClick={() => setActiveTab('activity')}
+                onClick={() => handleTabChange('activity')}
                 className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors ${
                   activeTab === 'activity'
                     ? 'border-indigo-600 text-indigo-600'
@@ -141,7 +236,7 @@ export default function ProfilePage() {
                 activity
               </button>
               <button
-                onClick={() => setActiveTab('reviews')}
+                onClick={() => handleTabChange('reviews')}
                 className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors ${
                   activeTab === 'reviews'
                     ? 'border-indigo-600 text-indigo-600'
@@ -151,7 +246,7 @@ export default function ProfilePage() {
                 reviews
               </button>
               <button
-                onClick={() => setActiveTab('friends')}
+                onClick={() => handleTabChange('friends')}
                 className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors ${
                   activeTab === 'friends'
                     ? 'border-indigo-600 text-indigo-600'
@@ -277,9 +372,128 @@ export default function ProfilePage() {
         )}
 
         {activeTab === 'activity' && (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Activity Tab</h2>
-            <p className="text-gray-500 text-lg">Content coming soon...</p>
+          <div className="bg-white rounded-lg shadow-sm">
+            {/* Activity Header */}
+            <div className="border-b border-gray-200 px-6 py-4">
+              <h2 className="text-2xl font-bold text-gray-900 uppercase tracking-wide">Recent Activity</h2>
+            </div>
+
+            {/* Activity Feed */}
+            <div className="divide-y divide-gray-200">
+              {activities.map((activity) => (
+                <div key={activity.id} className="px-6 py-5 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      {/* Followed Activity */}
+                      {activity.type === 'followed' && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900 font-semibold">{user.username}</span>
+                          <span className="text-gray-600">followed</span>
+                          <span className="text-gray-900 font-semibold">{activity.username}</span>
+                        </div>
+                      )}
+
+                      {/* Watchlist Activity */}
+                      {activity.type === 'watchlist' && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-gray-900 font-semibold">{user.username}</span>
+                            <span className="text-gray-600">added</span>
+                            <span className="text-gray-900 font-semibold">{activity.movieTitle}</span>
+                            <span className="text-gray-600">to their watchlist</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Watched Activity */}
+                      {activity.type === 'watched' && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-gray-900 font-semibold">{user.username}</span>
+                            <span className="text-gray-600">watched</span>
+                          </div>
+                          
+                          {/* Movie Card */}
+                          <div className="flex gap-4 mt-3 bg-gray-50 rounded-lg p-4">
+                            {/* Movie Poster */}
+                            <div className="flex-shrink-0 w-20 h-28 bg-gray-300 rounded flex items-center justify-center">
+                              <span className="text-gray-500 text-xs">Poster</span>
+                            </div>
+                            
+                            {/* Movie Details */}
+                            <div className="flex-1">
+                              <h3 className="text-lg font-bold text-gray-900 mb-1">
+                                {activity.movieTitle} 
+                                {activity.movieYear && (
+                                  <span className="text-gray-500 font-normal ml-2">{activity.movieYear}</span>
+                                )}
+                              </h3>
+                              
+                              {/* Rating */}
+                              {activity.rating && (
+                                <div className="flex items-center gap-1 mb-2">
+                                  {renderStars(activity.rating)}
+                                </div>
+                              )}
+                              
+                              {/* Review Text */}
+                              {activity.reviewText && (
+                                <p className="text-gray-700 mb-2">{activity.reviewText}</p>
+                              )}
+                              
+                              {/* Likes */}
+                              {activity.likes !== undefined && (
+                                <div className="flex items-center gap-2 text-gray-500">
+                                  <span>❤️ {activity.likes} likes</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Listed Activity */}
+                      {activity.type === 'listed' && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-gray-900 font-semibold">{user.username}</span>
+                            <span className="text-gray-600">listed</span>
+                            <span className="text-gray-900 font-semibold">{activity.listName}</span>
+                            <span className="text-gray-600">({activity.movieCount} films)</span>
+                            {activity.likes !== undefined && (
+                              <span className="text-gray-500 ml-2">❤️ {activity.likes}</span>
+                            )}
+                          </div>
+                          
+                          {/* Movie Thumbnails */}
+                          {activity.movies && (
+                            <div className="flex gap-2 mt-3">
+                              {activity.movies.map((movie: { id: number; image: string; title: string }) => (
+                                <div 
+                                  key={movie.id} 
+                                  className="w-16 h-24 bg-gray-300 rounded flex items-center justify-center flex-shrink-0"
+                                  title={movie.title}
+                                >
+                                  <span className="text-gray-500 text-xs text-center px-1">📽️</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Timestamp */}
+                    <span className="text-gray-400 text-sm ml-4 flex-shrink-0">{activity.timestamp}</span>
+                  </div>
+                </div>
+              ))}
+
+              {/* End of Activity */}
+              <div className="px-6 py-8 text-center">
+                <p className="text-gray-400 text-sm">End of recent activity</p>
+              </div>
+            </div>
           </div>
         )}
 
