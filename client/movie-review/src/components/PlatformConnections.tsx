@@ -31,8 +31,8 @@ const PLATFORM_INFO = {
     name: 'Xbox',
     color: 'bg-green-600',
     icon: 'https://www.pngall.com/wp-content/uploads/13/Xbox-Logo-PNG-File.png',
-    instructions: 'Link your Microsoft/Xbox account',
-    description: 'Coming soon: Link your Xbox account to track playtime',
+    instructions: 'Enter your Xbox User ID to link',
+    description: 'Link your Xbox account to track playtime',
   },
   playstation: {
     name: 'PlayStation',
@@ -48,6 +48,7 @@ export default function PlatformConnections() {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [steamId, setSteamId] = useState('');
+  const [xboxUserId, setXboxUserId] = useState('');
   const [syncStatus, setSyncStatus] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -89,6 +90,37 @@ export default function PlatformConnections() {
     } catch (error) {
       console.error('Error connecting Steam:', error);
       alert('Failed to connect Steam account');
+    } finally {
+      setConnecting(null);
+    }
+  };
+
+  const handleConnectXbox = async () => {
+    if (!xboxUserId) {
+      alert('Please enter your Xbox User ID');
+      return;
+    }
+
+    setConnecting('xbox');
+    try {
+      const response = await fetch('/api/platforms/xbox/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ xboxUserId }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setXboxUserId('');
+        loadConnections();
+        alert('Xbox account connected successfully!');
+      } else {
+        alert(data.error || 'Failed to connect Xbox account');
+      }
+    } catch (error) {
+      console.error('Error connecting Xbox:', error);
+      alert('Failed to connect Xbox account');
     } finally {
       setConnecting(null);
     }
@@ -258,8 +290,97 @@ export default function PlatformConnections() {
         )}
       </div>
 
+      {/* Xbox Connection */}
+      <div className="bg-white rounded-lg shadow-md p-6 border-2 border-green-200">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <img src={PLATFORM_INFO.xbox.icon} alt="Xbox logo" className="w-8 h-8 object-contain" />
+            <div>
+              <h3 className="text-xl font-semibold">Xbox</h3>
+              {getConnectedPlatform('xbox') ? (
+                <p className="text-sm text-gray-600">
+                  Connected • Last synced: {formatDate(getConnectedPlatform('xbox')!.lastSyncedAt)}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500">Not connected</p>
+              )}
+            </div>
+          </div>
+          {getConnectedPlatform('xbox') && (
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handleSyncGames('xbox')}
+                disabled={syncStatus.xbox}
+                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+              >
+                {syncStatus.xbox ? 'Syncing...' : 'Sync Games'}
+              </button>
+              <button
+                onClick={() => handleDisconnect('xbox')}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Disconnect
+              </button>
+            </div>
+          )}
+        </div>
+
+        {!getConnectedPlatform('xbox') && (
+          <div className="mt-4 space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Xbox User ID
+              </label>
+              <input
+                type="text"
+                value={xboxUserId}
+                onChange={(e) => setXboxUserId(e.target.value)}
+                placeholder="Enter your Xbox User ID"
+                className="border border-gray-300 rounded-md px-3 py-2 w-full"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Find your Xbox User ID in your Xbox profile settings
+              </p>
+            </div>
+            <button
+              onClick={handleConnectXbox}
+              disabled={connecting === 'xbox'}
+              className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+            >
+              {connecting === 'xbox' ? 'Connecting...' : 'Connect Xbox'}
+            </button>
+          </div>
+        )}
+
+        {getConnectedPlatform('xbox')?.gamesData && Array.isArray(getConnectedPlatform('xbox')?.gamesData) && getConnectedPlatform('xbox')!.gamesData.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h4 className="font-semibold mb-2">Your Games ({getConnectedPlatform('xbox')?.gamesData.length})</h4>
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {getConnectedPlatform('xbox')?.gamesData.slice(0, 10).map((game: any, idx: number) => (
+                <div key={idx} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded">
+                  <span className="font-medium">{game.name}</span>
+                  <div className="text-gray-600">
+                    {game.playtimeHours}h
+                    {game.lastPlayed && (
+                      <span className="ml-2 text-xs">
+                        • Last played: {new Date(game.lastPlayed).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {getConnectedPlatform('xbox')?.gamesData.length > 10 && (
+                <p className="text-xs text-gray-500 text-center pt-2">
+                  ... and {getConnectedPlatform('xbox')!.gamesData.length - 10} more games
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Other Platforms - Coming Soon */}
-      {(['nintendo', 'xbox', 'playstation'] as const).map((platform) => {
+      {(['nintendo', 'playstation'] as const).map((platform) => {
         const connected = getConnectedPlatform(platform);
         const info = PLATFORM_INFO[platform];
 

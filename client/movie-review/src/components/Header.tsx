@@ -156,6 +156,18 @@ export default function Header() {
                         {session ? (
                             <div className="flex items-center space-x-4">
                                 <Link
+                                    href="/movies"
+                                    className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-bold transition-colors"
+                                >
+                                    Movies
+                                </Link>
+                                <Link
+                                    href="/games"
+                                    className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-bold transition-colors"
+                                >
+                                    Games
+                                </Link>
+                                <Link
                                     href="/dashboard"
                                     className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-bold transition-colors"
                                 >
@@ -179,6 +191,18 @@ export default function Header() {
                             </div>
                         ) : (
                             <>
+                                <Link
+                                    href="/movies"
+                                    className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-bold transition-colors"
+                                >
+                                    Movies
+                                </Link>
+                                <Link
+                                    href="/games"
+                                    className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-bold transition-colors"
+                                >
+                                    Games
+                                </Link>
                                 <Link
                                     href="/auth/signin"
                                     className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-bold transition-colors"
