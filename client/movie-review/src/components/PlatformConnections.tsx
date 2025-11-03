@@ -20,13 +20,6 @@ const PLATFORM_INFO = {
     instructions: 'Enter your Steam ID to link',
     description: 'Link your Steam account to track playtime',
   },
-  nintendo: {
-    name: 'Nintendo Switch',
-    color: 'bg-red-600',
-    icon: 'https://creazilla-store.fra1.digitaloceanspaces.com/icons/3210154/nintendo-switch-icon-md.png',
-    instructions: 'Link your Nintendo account',
-    description: 'Coming soon: Link your Nintendo account to track playtime',
-  },
   xbox: {
     name: 'Xbox',
     color: 'bg-green-600',
@@ -38,8 +31,8 @@ const PLATFORM_INFO = {
     name: 'PlayStation',
     color: 'bg-blue-500',
     icon: 'https://th.bing.com/th/id/R.cfb016ea519990f1f005f960c8463d60?rik=IksI2%2fGWtxNogQ&riu=http%3a%2f%2fpluspng.com%2fimg-png%2fplaystation-png-playstation-icon-512.png&ehk=3D4u7afiw1vNwCkR6Gp42plDgOizum%2fz%2bxDOL0fzVDM%3d&risl=&pid=ImgRaw&r=0',
-    instructions: 'Link your PlayStation account',
-    description: 'Coming soon: Link your PlayStation account to track playtime',
+    instructions: 'Enter your PSN NPSSO token',
+    description: 'Link your PlayStation account to track playtime and trophies',
   },
 };
 
@@ -49,6 +42,7 @@ export default function PlatformConnections() {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [steamId, setSteamId] = useState('');
   const [xboxUserId, setXboxUserId] = useState('');
+  const [psnNpso, setPsnNpso] = useState('');
   const [syncStatus, setSyncStatus] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -126,6 +120,46 @@ export default function PlatformConnections() {
     }
   };
 
+  const handleConnectPSN = async () => {
+    if (!psnNpso) {
+      alert('Please enter your PSN NPSSO token');
+      return;
+    }
+
+    setConnecting('playstation');
+    try {
+      const response = await fetch('/api/platforms/psn/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ npsso: psnNpso }),
+      });
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        alert(`Failed to connect PlayStation account: Server returned non-JSON response`);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setPsnNpso('');
+        loadConnections();
+        alert('PlayStation account connected successfully!');
+      } else {
+        alert(data.error || 'Failed to connect PlayStation account');
+      }
+    } catch (error) {
+      console.error('Error connecting PlayStation:', error);
+      alert('Failed to connect PlayStation account');
+    } finally {
+      setConnecting(null);
+    }
+  };
+
   const handleDisconnect = async (platformType: string) => {
     if (!confirm(`Disconnect your ${PLATFORM_INFO[platformType as keyof typeof PLATFORM_INFO]?.name} account?`)) {
       return;
@@ -153,7 +187,25 @@ export default function PlatformConnections() {
   const handleSyncGames = async (platformType: string) => {
     setSyncStatus({ ...syncStatus, [platformType]: true });
     try {
-      const response = await fetch(`/api/platforms/${platformType}/games`);
+      // Map platform types to API endpoints
+      const platformApiMap: Record<string, string> = {
+        'playstation': 'psn',
+        'steam': 'steam',
+        'xbox': 'xbox',
+      };
+      
+      const apiEndpoint = platformApiMap[platformType] || platformType;
+      const response = await fetch(`/api/platforms/${apiEndpoint}/games`);
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Non-JSON response:', text);
+        alert(`Failed to sync games: Server returned non-JSON response`);
+        return;
+      }
+
       const data = await response.json();
 
       if (data.success) {
@@ -379,38 +431,103 @@ export default function PlatformConnections() {
         )}
       </div>
 
-      {/* Other Platforms - Coming Soon */}
-      {(['nintendo', 'playstation'] as const).map((platform) => {
-        const connected = getConnectedPlatform(platform);
-        const info = PLATFORM_INFO[platform];
-
-        return (
-          <div key={platform} className="bg-white rounded-lg shadow-md p-6 border-2 border-gray-200 opacity-60">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <img src={info.icon} alt={`${info.name} logo`} className="w-8 h-8 object-contain" />
-                <div>
-                  <h3 className="text-xl font-semibold">{info.name}</h3>
-                  <p className="text-sm text-gray-500">{info.description}</p>
-                </div>
-              </div>
-              {connected && (
-                <button
-                  onClick={() => handleDisconnect(platform)}
-                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  Disconnect
-                </button>
+      {/* PlayStation Connection */}
+      <div className="bg-white rounded-lg shadow-md p-6 border-2 border-blue-200">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <img src={PLATFORM_INFO.playstation.icon} alt="PlayStation logo" className="w-8 h-8 object-contain" />
+            <div>
+              <h3 className="text-xl font-semibold">PlayStation</h3>
+              {getConnectedPlatform('playstation') ? (
+                <p className="text-sm text-gray-600">
+                  Connected • Last synced: {formatDate(getConnectedPlatform('playstation')!.lastSyncedAt)}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500">Not connected</p>
               )}
             </div>
-            {!connected && (
-              <p className="text-sm text-gray-600 mt-3">
-                Account linking for {info.name} is coming soon. This will allow you to automatically sync your game library and playtime data.
-              </p>
-            )}
           </div>
-        );
-      })}
+          {getConnectedPlatform('playstation') && (
+            <div className="flex space-x-2">
+              <button
+                onClick={() => handleSyncGames('playstation')}
+                disabled={syncStatus.playstation}
+                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+              >
+                {syncStatus.playstation ? 'Syncing...' : 'Sync Games'}
+              </button>
+              <button
+                onClick={() => handleDisconnect('playstation')}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Disconnect
+              </button>
+            </div>
+          )}
+        </div>
+
+        {!getConnectedPlatform('playstation') && (
+          <div className="mt-4 space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                PSN NPSSO Token
+              </label>
+              <input
+                type="text"
+                value={psnNpso}
+                onChange={(e) => setPsnNpso(e.target.value)}
+                placeholder="Enter your PSN NPSSO token"
+                className="border border-gray-300 rounded-md px-3 py-2 w-full"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Get your NPSSO token at{' '}
+                <a
+                  href="https://ca.account.sony.com/api/v1/ssocookie"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  Sony Account SSO Cookie
+                </a>
+                {' '}(see PSN_SETUP.md for instructions)
+              </p>
+            </div>
+            <button
+              onClick={handleConnectPSN}
+              disabled={connecting === 'playstation'}
+              className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+            >
+              {connecting === 'playstation' ? 'Connecting...' : 'Connect PlayStation'}
+            </button>
+          </div>
+        )}
+
+        {getConnectedPlatform('playstation')?.gamesData && Array.isArray(getConnectedPlatform('playstation')?.gamesData) && getConnectedPlatform('playstation')!.gamesData.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <h4 className="font-semibold mb-2">Your Games ({getConnectedPlatform('playstation')?.gamesData.length})</h4>
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {getConnectedPlatform('playstation')?.gamesData.slice(0, 10).map((game: any, idx: number) => (
+                <div key={idx} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded">
+                  <span className="font-medium">{game.name}</span>
+                  <div className="text-gray-600">
+                    {game.playtimeHours}h
+                    {game.lastPlayed && (
+                      <span className="ml-2 text-xs">
+                        • Last played: {new Date(game.lastPlayed).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {getConnectedPlatform('playstation')?.gamesData.length > 10 && (
+                <p className="text-xs text-gray-500 text-center pt-2">
+                  ... and {getConnectedPlatform('playstation')!.gamesData.length - 10} more games
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

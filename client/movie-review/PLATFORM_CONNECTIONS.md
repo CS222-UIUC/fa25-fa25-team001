@@ -1,6 +1,6 @@
 # Gaming Platform Connections
 
-This feature allows users to **link** their gaming platform accounts (Steam, Nintendo, Xbox, PlayStation) to sync playtime data.
+This feature allows users to **link** their gaming platform accounts (Steam, Xbox, PlayStation) to sync playtime data.
 
 ⚠️ **Important**: These are account **linkages only** - users still sign in with their email/password. Platform accounts are only used to access gaming data.
 
@@ -18,14 +18,22 @@ Connect your Steam account to view your game library, playtime, and last played 
 3. Find your Steam ID at [steamid.io](https://steamid.io/) or [steamdb.info](https://steamdb.info/calculator/)
 4. Navigate to your profile page and connect your Steam account
 
-### 🚧 Nintendo Switch (Coming Soon)
-Full OAuth integration pending.
+### 🎮 PlayStation (Installed, Setup Required)
+PlayStation Network integration using the `psn-api` package.
 
-### 🚧 Xbox/Microsoft (Coming Soon)
-Full OAuth integration pending.
+**Setup Instructions:**
+1. Install `psn-api` (already done): `npm install psn-api`
+2. Get your NPSSO token:
+   - Sign in to [playstation.com](https://www.playstation.com/)
+   - In the same browser, visit: [https://ca.account.sony.com/api/v1/ssocookie](https://ca.account.sony.com/api/v1/ssocookie)
+   - Copy the NPSSO token from the JSON response
+3. Add it to your `.env.local` file:
+   ```
+   PSN_NPSSO=your_npsso_token_here
+   ```
+4. See `PSN_SETUP.md` for detailed documentation and integration examples
 
-### 🚧 PlayStation (Coming Soon)
-Full OAuth integration pending.
+**Note**: PSN tokens need to be converted to access tokens before use. See the PSN_SETUP.md guide.
 
 ## How It Works
 
@@ -43,7 +51,7 @@ Full OAuth integration pending.
 ```prisma
 model PlatformConnection {
   id             String   @id @default(cuid())
-  platformType   String   // 'steam', 'nintendo', 'xbox', 'playstation'
+  platformType   String   // 'steam', 'xbox', 'playstation'
   platformUserId String?  // User's ID on the external platform
   accessToken    String?  // OAuth token (encrypted in production)
   refreshToken   String?  // OAuth refresh token
@@ -108,7 +116,7 @@ npx prisma db push
 
 ## Future Enhancements
 
-1. **OAuth Integration** - Full OAuth for Nintendo, Xbox, and PlayStation
+1. **OAuth Integration** - Full OAuth for Xbox and PlayStation
 2. **Auto-Sync** - Background jobs to automatically sync playtime data
 3. **Analytics** - Chart total playtime across all platforms
 4. **Trophies/Achievements** - Display earned achievements

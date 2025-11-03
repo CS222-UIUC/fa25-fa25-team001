@@ -271,7 +271,7 @@ model TvShowRating {
 
 model PlatformConnection {
   id            String   @id @default(cuid())
-  platformType  String   // 'steam', 'nintendo', 'xbox', 'playstation'
+  platformType  String   // 'steam', 'xbox', 'playstation'
   platformUserId String? // User's ID on the external platform
   accessToken   String?  // OAuth token (encrypted in production)
   refreshToken  String?  // OAuth refresh token (encrypted in production)
