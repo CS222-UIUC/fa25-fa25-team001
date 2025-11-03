@@ -117,7 +117,8 @@ export async function GET(request: NextRequest) {
       return parseFloat((hours + minutes / 60 + seconds / 3600).toFixed(1));
     };
 
-    // Add played games
+    // Add played games (includes both paid and free-to-play games)
+    // getUserPlayedGames returns all games the user has played, regardless of purchase status
     if (playedGames?.titles) {
       playedGames.titles.forEach((game: any) => {
         const playtimeHours = parseDurationToHours(game.playDuration || 'PT0H0M0S');
