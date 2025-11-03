@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 
 interface Game {
@@ -15,12 +15,57 @@ interface Game {
   releaseDate?: string;
 }
 
+type SortOption = 'rating-high' | 'rating-low' | 'alphabetical' | 'release-newest' | 'release-oldest';
+
+// Sort games based on selected option
+const sortGames = (gamesToSort: Game[], sortOption: SortOption): Game[] => {
+  const sorted = [...gamesToSort];
+  
+  switch (sortOption) {
+    case 'rating-high':
+      return sorted.sort((a, b) => {
+        const ratingA = a.rating ? parseFloat(a.rating) : 0;
+        const ratingB = b.rating ? parseFloat(b.rating) : 0;
+        return ratingB - ratingA;
+      });
+    
+    case 'rating-low':
+      return sorted.sort((a, b) => {
+        const ratingA = a.rating ? parseFloat(a.rating) : 0;
+        const ratingB = b.rating ? parseFloat(b.rating) : 0;
+        return ratingA - ratingB;
+      });
+    
+    case 'alphabetical':
+      return sorted.sort((a, b) => a.name.localeCompare(b.name));
+    
+    case 'release-newest':
+      return sorted.sort((a, b) => {
+        const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
+        const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
+        return dateB - dateA; // Newest first
+      });
+    
+    case 'release-oldest':
+      return sorted.sort((a, b) => {
+        const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
+        const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
+        return dateA - dateB; // Oldest first
+      });
+    
+    default:
+      return sorted;
+  }
+};
+
 export default function GamesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [games, setGames] = useState<Game[]>([]);
+  const [sortedGames, setSortedGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>('rating-high');
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,15 +84,19 @@ export default function GamesPage() {
       const data = await response.json();
 
       if (data.success) {
-        setGames(data.games || []);
+        const fetchedGames = data.games || [];
+        setGames(fetchedGames);
+        // Initial sort will be applied via useEffect
       } else {
         setError(data.error || 'Failed to search games');
         setGames([]);
+        setSortedGames([]);
       }
     } catch (err) {
       console.error('Search error:', err);
       setError('An error occurred while searching');
       setGames([]);
+      setSortedGames([]);
     } finally {
       setLoading(false);
     }
@@ -60,15 +109,24 @@ export default function GamesPage() {
     return new Date(dateStr).getFullYear();
   };
 
+  // Apply sorting when games or sortBy changes
+  useEffect(() => {
+    if (games.length > 0) {
+      setSortedGames(sortGames(games, sortBy));
+    } else {
+      setSortedGames([]);
+    }
+  }, [games, sortBy]);
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50bg-gray-900">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Video Games</h1>
-          <p className="text-lg text-gray-600">Search and discover games</p>
+          <h1 className="text-4xl font-bold text-gray-900text-white mb-2">Video Games</h1>
+          <p className="text-lg text-gray-600text-gray-400">Search and discover games</p>
         </div>
 
         {/* Search Bar */}
@@ -79,7 +137,7 @@ export default function GamesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for games..."
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg"
+              className="flex-1 px-4 py-3 border border-gray-300border-gray-700 rounded-lg bg-whitebg-gray-800 text-gray-900text-white placeholder-gray-500placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg"
             />
             <button
               type="submit"
@@ -93,7 +151,7 @@ export default function GamesPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-8 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="mb-8 bg-red-50bg-red-900/20 border border-red-200border-red-800 text-red-700text-red-400 px-4 py-3 rounded-lg">
             {error}
           </div>
         )}
@@ -103,17 +161,36 @@ export default function GamesPage() {
           <div>
             {games.length > 0 ? (
               <>
-                <h2 className="text-2xl font-semibold mb-4">
-                  Results ({games.length})
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-semibold text-gray-900text-white">
+                    Results ({games.length})
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="sort" className="text-sm font-medium text-gray-700text-gray-300">
+                      Sort by:
+                    </label>
+                    <select
+                      id="sort"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as SortOption)}
+                      className="px-3 py-2 border border-gray-300border-gray-700 rounded-lg bg-whitebg-gray-800 text-gray-900text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    >
+                      <option value="rating-high">Highest Rating</option>
+                      <option value="rating-low">Lowest Rating</option>
+                      <option value="alphabetical">Alphabetical (A-Z)</option>
+                      <option value="release-newest">Release Date (Newest)</option>
+                      <option value="release-oldest">Release Date (Oldest)</option>
+                    </select>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {games.map((game, index) => (
+                  {sortedGames.map((game, index) => (
                     <a
                       key={`${game.id}-${index}`}
                       href={`#`}
-                      className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow"
+                      className="group bg-whitebg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow"
                     >
-                      <div className="aspect-[3/4] bg-gray-200 overflow-hidden">
+                      <div className="aspect-[3/4] bg-gray-200bg-gray-700 overflow-hidden">
                         <img
                           src={game.cover || getDefaultCover()}
                           alt={game.name}
@@ -121,10 +198,10 @@ export default function GamesPage() {
                         />
                       </div>
                       <div className="p-4">
-                        <h3 className="font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-indigo-600 transition-colors">
+                        <h3 className="font-semibold text-gray-900text-white mb-1 line-clamp-2 group-hover:text-indigo-600group-hover:text-indigo-400 transition-colors">
                           {game.name}
                         </h3>
-                        <div className="flex items-center justify-between text-sm text-gray-600">
+                        <div className="flex items-center justify-between text-sm text-gray-600text-gray-400">
                           <p>{formatDate(game.releaseDate)}</p>
                           {game.rating && (
                             <span className="flex items-center">
@@ -133,7 +210,7 @@ export default function GamesPage() {
                           )}
                         </div>
                         {game.platforms.length > 0 && (
-                          <p className="text-xs text-gray-500 mt-2 line-clamp-1">
+                          <p className="text-xs text-gray-500text-gray-500 mt-2 line-clamp-1">
                             {game.platforms.slice(0, 3).join(', ')}
                             {game.platforms.length > 3 && '...'}
                           </p>
@@ -144,8 +221,8 @@ export default function GamesPage() {
                 </div>
               </>
             ) : (
-              <div className="text-center py-12 bg-white rounded-lg">
-                <p className="text-gray-500 text-lg">No games found. Try a different search.</p>
+              <div className="text-center py-12 bg-whitebg-gray-800 rounded-lg">
+                <p className="text-gray-500text-gray-400 text-lg">No games found. Try a different search.</p>
               </div>
             )}
           </div>
@@ -154,22 +231,22 @@ export default function GamesPage() {
         {/* Featured Games - Show when no search */}
         {!searched && !loading && (
           <div>
-            <h2 className="text-2xl font-semibold mb-4">Featured Games</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-gray-900text-white">Featured Games</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {['The Witcher 3', 'Elden Ring', 'God of War', 'Cyberpunk 2077'].map((title) => (
                 <div
                   key={title}
-                  className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse"
+                  className="bg-whitebg-gray-800 rounded-lg shadow-md overflow-hidden animate-pulse"
                 >
-                  <div className="aspect-[3/4] bg-gray-300" />
+                  <div className="aspect-[3/4] bg-gray-300bg-gray-700" />
                   <div className="p-4">
-                    <div className="h-4 bg-gray-300 rounded mb-2" />
-                    <div className="h-4 bg-gray-300 rounded w-2/3" />
+                    <div className="h-4 bg-gray-300bg-gray-700 rounded mb-2" />
+                    <div className="h-4 bg-gray-300bg-gray-700 rounded w-2/3" />
                   </div>
                 </div>
               ))}
             </div>
-            <p className="text-center text-gray-500 mt-8">
+            <p className="text-center text-gray-500text-gray-400 mt-8">
               Search for your favorite games above!
             </p>
           </div>

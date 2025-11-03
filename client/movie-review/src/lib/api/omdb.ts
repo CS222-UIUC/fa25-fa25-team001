@@ -120,3 +120,55 @@ export async function getMovieByTitle(title: string): Promise<OMDBMovie> {
   return data;
 }
 
+/**
+ * Get popular/trending movies by searching for common popular terms
+ * Note: OMDB doesn't have a direct trending API, so we search for popular movie titles
+ */
+export async function getPopularMovies(limit: number = 20) {
+  // Popular movie search terms that tend to return good results
+  const searchTerms = [
+    '2024', // Recent year
+    '2023',
+    'action',
+    'drama',
+    'comedy',
+  ];
+
+  const allMovies: Array<{
+    Title: string;
+    Year: string;
+    imdbID: string;
+    Type: string;
+    Poster: string;
+  }> = [];
+
+  try {
+    // Try multiple searches to get variety
+    for (const term of searchTerms.slice(0, 3)) {
+      try {
+        const result = await searchMovies(term, 1);
+        if (result.Search) {
+          // Filter for movies with posters
+          const moviesWithPosters = result.Search.filter(
+            m => m.Type === 'movie' && m.Poster && m.Poster !== 'N/A'
+          );
+          allMovies.push(...moviesWithPosters);
+        }
+        if (allMovies.length >= limit * 2) break;
+      } catch (err) {
+        // Continue to next search term if one fails
+        continue;
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching popular movies:', error);
+  }
+
+  // Remove duplicates and limit
+  const uniqueMovies = Array.from(
+    new Map(allMovies.map(m => [m.imdbID, m])).values()
+  ).slice(0, limit);
+
+  return uniqueMovies;
+}
+

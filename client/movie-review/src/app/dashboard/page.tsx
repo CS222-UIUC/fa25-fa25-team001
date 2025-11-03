@@ -59,17 +59,17 @@ export default function Dashboard() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-whitebg-gray-900">
+        <div className="text-xl text-gray-900text-white">Loading...</div>
       </div>
     );
   }
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-whitebg-gray-900">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Please sign in to access your dashboard</h1>
+          <h1 className="text-2xl font-bold mb-4 text-gray-900text-white">Please sign in to access your dashboard</h1>
           <Link href="/auth/signin" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             Sign In
           </Link>
@@ -79,22 +79,22 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Welcome to your Dashboard</h1>
-          <p className="text-gray-600 mt-2">Manage your movie reviews and preferences</p>
+          <h1 className="text-3xl font-bold text-gray-900text-white">Welcome to your Dashboard</h1>
+          <p className="text-gray-600text-gray-400 mt-2">Manage your movie reviews and preferences</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Profile Card */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-black text-xl font-semibold mb-4">Profile</h2>
+          <div className="bg-whitebg-gray-800 rounded-lg shadow-md p-6">
+            <h2 className="text-blacktext-white text-xl font-semibold mb-4">Profile</h2>
             <div className="flex items-center space-x-4 mb-4">
               <img src={profile.image || "/default.jpg"} alt="Profile" className="w-16 h-16 rounded-full" />
               <div>
-                <h3 className=" text-black font-medium">{profile.name}</h3>
-                <p className=" text-black text-sm">{profile.email}</p>
+                <h3 className="text-blacktext-white font-medium">{profile.name}</h3>
+                <p className="text-blacktext-gray-300 text-sm">{profile.email}</p>
               </div>
             </div>
             <Link
@@ -106,22 +106,22 @@ export default function Dashboard() {
           </div>
 
           {/* Recent Reviews Card */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-black text-xl font-semibold mb-4">Recent Reviews</h2>
+          <div className="bg-whitebg-gray-800 rounded-lg shadow-md p-6">
+            <h2 className="text-blacktext-white text-xl font-semibold mb-4">Recent Reviews</h2>
             {recentReviews.length === 0 ? (
-              <p className="text-gray-600">No reviews yet</p>
+              <p className="text-gray-600text-gray-400">No reviews yet</p>
             ) : (
-              <ul className="divide-y divide-gray-200">
+              <ul className="divide-y divide-gray-200divide-gray-700">
                 {recentReviews.map((r) => (
                   <li key={r.id} className="py-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{r.movieTitle}</p>
-                        <p className="text-sm text-gray-600">{r.comment}</p>
+                        <p className="text-sm font-medium text-gray-900text-white">{r.movieTitle}</p>
+                        <p className="text-sm text-gray-600text-gray-400">{r.comment}</p>
                       </div>
                       <div className="text-yellow-500 ml-4">{"⭐".repeat(r.rating)}</div>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">{r.date}</p>
+                    <p className="text-xs text-gray-400text-gray-500 mt-1">{r.date}</p>
                   </li>
                 ))}
               </ul>
@@ -134,16 +134,16 @@ export default function Dashboard() {
           </div>
 
           {/* Watchlist Card */}
-          <div className="text-black bg-white rounded-lg shadow-md p-6">
+          <div className="text-blacktext-white bg-whitebg-gray-800 rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Watchlist</h2>
             {watchlistPreview.length === 0 ? (
-              <p className="text-gray-600">Your watchlist is empty</p>
+              <p className="text-gray-600text-gray-400">Your watchlist is empty</p>
             ) : (
               <ul className="space-y-2">
                 {watchlistPreview.map((i) => (
                   <li key={i.id} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-900">{i.title}</span>
-                    <span className="text-gray-500">{i.year ?? ""}</span>
+                    <span className="text-gray-900text-white">{i.title}</span>
+                    <span className="text-gray-500text-gray-400">{i.year ?? ""}</span>
                   </li>
                 ))}
               </ul>

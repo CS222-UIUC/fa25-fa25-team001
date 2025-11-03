@@ -49,9 +49,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // For now, return a placeholder response since Xbox API requires OAuth tokens
-    // In a full implementation, you would use the Xbox Live API with proper authentication
+    // Xbox API Implementation Notes:
+    // - When implementing full Xbox Live API integration, ensure to include FREE GAMES
+    // - Similar to Steam's include_played_free_games=true parameter, Xbox should include all games
+    // - Do NOT filter out free-to-play titles or free games obtained through promotions
+    // - Include ALL games the user has played/installed, regardless of purchase status
     
+    // Example implementations (when OAuth is set up):
+    // 1. Using OpenXBL API (unofficial but easier):
+    //    GET https://xbl.io/api/v2/{xuid}/games - includes all games (free + purchased)
+    // 2. Using official Xbox Live API:
+    //    GET https://xsts.auth.xboxlive.com/user/{xuid}/playersettings
+    //    - Ensure API call includes all game types (retail, arcade, free-to-play, etc.)
+    
+    // IMPORTANT: When processing game data, do NOT filter based on:
+    // - purchaseStatus === 'Free'
+    // - isFree === true
+    // - price === 0
+    // Include ALL games in the response, just like Steam does
+    
+    // For now, return a placeholder response since Xbox API requires OAuth tokens
     // Format placeholder games data
     const games: any[] = [];
 

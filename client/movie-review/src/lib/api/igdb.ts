@@ -62,24 +62,37 @@ async function igdbRequest<T>(endpoint: string, body: string): Promise<T[]> {
   });
 
   if (!response.ok) {
-    throw new Error(`IGDB API error: ${response.statusText}`);
+    // Get error details for debugging
+    const errorText = await response.text().catch(() => '');
+    console.error('IGDB API error:', response.status, response.statusText);
+    console.error('Request body:', body);
+    console.error('Error response:', errorText);
+    throw new Error(`IGDB API error: ${response.statusText}${errorText ? ` - ${errorText.substring(0, 200)}` : ''}`);
   }
 
   return response.json();
 }
 
 /**
- * Search for games
+ * Search for games using IGDB's search function
  */
-export async function searchGames(query: string, limit: number = 20) {
+export async function searchGames(query: string, limit: number = 24) {
+  const cleanQuery = query.trim().replace(/["']/g, '').trim();
+  
+  if (!cleanQuery) {
+    throw new Error('Search query cannot be empty');
+  }
+  
+  const escapedQuery = cleanQuery.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  
   const body = `
-    search "${query}";
+    search "${escapedQuery}";
     fields id,name,slug,summary,genres.name,platforms.name,rating,cover.image_id,
            release_dates.date,first_release_date;
     limit ${limit};
   `.trim();
-
-  return igdbRequest<{
+  
+  const results = await igdbRequest<{
     id: number;
     name: string;
     slug: string;
@@ -91,6 +104,16 @@ export async function searchGames(query: string, limit: number = 20) {
     release_dates?: Array<{ date: number }>;
     first_release_date?: number;
   }>('/games', body);
+  
+  // Sort by rating (highest first), then by name
+  results.sort((a, b) => {
+    if ((b.rating || 0) !== (a.rating || 0)) {
+      return (b.rating || 0) - (a.rating || 0);
+    }
+    return a.name.localeCompare(b.name);
+  });
+  
+  return results.slice(0, limit);
 }
 
 /**
