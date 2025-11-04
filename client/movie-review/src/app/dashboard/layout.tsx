@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Header from "@/components/Header";
 
 export const metadata: Metadata = {
-  title: "Dashboard - MovieReview",
-  description: "Your movie review dashboard",
+  title: "Dashboard - Media Review",
+  description: "Your media review dashboard",
 };
 
 export default function DashboardLayout({
