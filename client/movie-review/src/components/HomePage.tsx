@@ -4,24 +4,29 @@ import Link from 'next/link';
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+    <div className="min-h-screen bg-gradient-to-br from-sky-300 via-cyan-200 to-teal-300 relative overflow-hidden">
+      {/* Decorative bubbles */}
+      <div className="absolute top-20 left-10 w-32 h-32 bg-white/20 rounded-full blur-xl float-animation"></div>
+      <div className="absolute top-40 right-20 w-48 h-48 bg-cyan-300/30 rounded-full blur-2xl float-animation" style={{ animationDelay: '2s' }}></div>
+      <div className="absolute bottom-20 left-1/3 w-40 h-40 bg-teal-300/25 rounded-full blur-xl float-animation" style={{ animationDelay: '4s' }}></div>
+      
       {/* Hero Section - Left Aligned */}
-      <div className="container mx-auto px-8 py-20">
+      <div className="container mx-auto px-8 py-20 relative z-10">
         <div className="max-w-2xl">
-          <h1 className="text-7xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+          <h1 className="text-7xl font-bold mb-6 bg-gradient-to-r from-cyan-600 via-teal-500 to-sky-600 bg-clip-text text-transparent drop-shadow-lg">
             Media Reviews
           </h1>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-xl text-sky-800 mb-8 font-medium">
             Discover and share your thoughts on movies, TV shows, and games
           </p>
           <div className="flex gap-4">
             <Link href="/auth/signin">
-              <button className="px-8 py-4 bg-gray-600 hover:bg-gray-700 rounded-lg font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
+              <button className="px-8 py-4 glass-strong rounded-2xl font-semibold text-lg text-sky-800 transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl hover:bg-white/40">
                 Sign In
               </button>
             </Link>
             <Link href="/auth/signup">
-              <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-lg transition-all transform hover:scale-105 shadow-lg">
+              <button className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white rounded-2xl font-semibold text-lg transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl glow-soft">
                 Create an Account
               </button>
             </Link>
@@ -30,8 +35,8 @@ export default function HomePage() {
       </div>
 
       {/* Trending Section */}
-      <div className="container mx-auto px-8 py-12">
-        <h2 className="text-3xl font-bold mb-6">Trending</h2>
+      <div className="container mx-auto px-8 py-12 relative z-10">
+        <h2 className="text-3xl font-bold mb-6 text-sky-800 drop-shadow-md">Trending</h2>
         
         {/* Scrolling Movie Bar */}
         <div className="relative overflow-hidden">
@@ -43,13 +48,13 @@ export default function HomePage() {
                   key={`${setIndex}-${i}`}
                   className="flex-shrink-0 w-48 group cursor-pointer"
                 >
-                  <div className="aspect-[2/3] bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg mb-3 group-hover:ring-2 group-hover:ring-blue-500 transition-all transform group-hover:scale-105">
-                    <div className="w-full h-full flex items-center justify-center text-gray-500">
+                  <div className="aspect-[2/3] glass-strong rounded-2xl mb-3 group-hover:ring-2 group-hover:ring-cyan-400/50 transition-all transform group-hover:scale-105 shadow-lg hover:shadow-xl">
+                    <div className="w-full h-full flex items-center justify-center text-sky-700 font-medium">
                       Movie {i}
                     </div>
                   </div>
-                  <h3 className="text-sm font-semibold truncate">Movie Title {i}</h3>
-                  <p className="text-xs text-gray-400">⭐ 4.5/5</p>
+                  <h3 className="text-sm font-semibold truncate text-sky-800">Movie Title {i}</h3>
+                  <p className="text-xs text-sky-600">⭐ 4.5/5</p>
                 </div>
               ))
             ))}

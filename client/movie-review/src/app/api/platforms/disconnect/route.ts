@@ -1,10 +1,23 @@
+/**
+ * ============================================================================
+ * ROUTE: Platform Disconnection API
+ * ============================================================================
+ * 
+ * Endpoint: DELETE /api/platforms/disconnect
+ * Purpose: Disconnect a platform account from user's profile
+ * 
+ * Authentication: Required (session-based)
+ * 
+ * Query Parameters:
+ *   - platformType (required): Platform to disconnect ('steam', 'playstation', 'xbox')
+ * 
+ * Returns: { success: true }
+ * 
+ * ============================================================================
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { disconnectPlatform } from '@/actions/platform';
-
-/**
- * Disconnect a platform account
- * DELETE /api/platforms/disconnect?platformType=steam
- */
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

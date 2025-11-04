@@ -1,15 +1,29 @@
+/**
+ * ============================================================================
+ * ROUTE: Steam OAuth Initiation
+ * ============================================================================
+ * 
+ * Endpoint: GET /api/platforms/steam/oauth
+ * Purpose: Initiate Steam OpenID authentication flow
+ * 
+ * Authentication: Required (session-based)
+ * 
+ * Returns: Redirects to Steam OpenID login page
+ * 
+ * Features:
+ * - Generates secure nonce and state tokens
+ * - Stores tokens in HTTP-only cookies
+ * - Redirects user to Steam for authentication
+ * - Redirects to callback handler after authentication
+ * 
+ * ============================================================================
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { cookies } from 'next/headers';
 import { randomBytes } from 'crypto';
-
-/**
- * Steam OpenID Authentication Initiation
- * GET /api/platforms/steam/oauth
- * 
- * Redirects user to Steam's OpenID login page
- */
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

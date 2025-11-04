@@ -1,13 +1,32 @@
+/**
+ * ============================================================================
+ * ROUTE: PlayStation Network (PSN) Platform Connection API
+ * ============================================================================
+ * 
+ * Endpoint: POST /api/platforms/psn/connect
+ * Purpose: Connect a user's PlayStation account using NPSSO token
+ * 
+ * Authentication: Required (session-based)
+ * 
+ * Request Body: { npsso: string }
+ *   - npsso: NPSSO token obtained from PlayStation website
+ * 
+ * Returns: { success: true }
+ * 
+ * Features:
+ * - Exchanges NPSSO token for access code
+ * - Exchanges access code for auth tokens
+ * - Stores access token, refresh token, and expiry
+ * - Validates token before storing connection
+ * 
+ * ============================================================================
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { connectPlatform } from '@/actions/platform';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { exchangeNpssoForAccessCode, exchangeAccessCodeForAuthTokens } from 'psn-api';
-
-/**
- * Connect a PlayStation account by NPSSO token
- * POST /api/platforms/psn/connect
- */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

@@ -1,10 +1,24 @@
+/**
+ * ============================================================================
+ * ROUTE: Xbox Platform Connection API
+ * ============================================================================
+ * 
+ * Endpoint: POST /api/platforms/xbox/connect
+ * Purpose: Connect a user's Xbox account to their profile
+ * 
+ * Authentication: Required (session-based)
+ * 
+ * Request Body: { xboxUserId: string }
+ * 
+ * Returns: { success: true }
+ * 
+ * Status: Basic implementation - May require OAuth for full functionality
+ * 
+ * ============================================================================
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { connectPlatform } from '@/actions/platform';
-
-/**
- * Connect an Xbox account by Xbox User ID
- * POST /api/platforms/xbox/connect
- */
 export async function POST(request: NextRequest) {
   try {
     const { xboxUserId } = await request.json();

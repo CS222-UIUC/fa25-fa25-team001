@@ -1,3 +1,22 @@
+/**
+ * ============================================================================
+ * ROUTE: Xbox Games API
+ * ============================================================================
+ * 
+ * Endpoint: GET /api/platforms/xbox/games
+ * Purpose: Fetch user's Xbox games (placeholder implementation)
+ * 
+ * Authentication: Required (session-based)
+ * 
+ * Returns: { success: true, games: [], message: string }
+ * 
+ * Status: Placeholder - Requires OAuth token implementation
+ * 
+ * Note: Full implementation should include all games (free + purchased)
+ * 
+ * ============================================================================
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';

@@ -266,32 +266,32 @@ export default function PlatformConnections() {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Loading connections...</div>;
+    return <div className="text-center py-8 text-sky-700 font-medium">Loading connections...</div>;
   }
 
   return (
     <div className="space-y-4">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Link Gaming Platforms</h2>
-        <p className="text-gray-600">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent mb-2 drop-shadow-md">Link Gaming Platforms</h2>
+        <p className="text-sky-700 font-medium">
           Link your gaming accounts to automatically track your playtime and game library. 
-          <span className="font-medium"> You'll still sign in with your email/password.</span>
+          <span className="font-semibold"> You'll still sign in with your email/password.</span>
         </p>
       </div>
 
       {/* Steam Connection */}
-      <div className="bg-white rounded-lg shadow-md p-6 border-2 border-blue-200">
+      <div className="glass-strong rounded-2xl shadow-xl p-6 border-2 border-cyan-300/50 hover:shadow-2xl transition-all">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <img src={PLATFORM_INFO.steam.icon} alt="Steam logo" className="w-8 h-8 object-contain" />
             <div>
-              <h3 className="text-xl font-semibold">Steam</h3>
+              <h3 className="text-xl font-semibold text-sky-800">Steam</h3>
               {getConnectedPlatform('steam') ? (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-sky-600 font-medium">
                   Connected • Last synced: {formatDate(getConnectedPlatform('steam')!.lastSyncedAt)}
                 </p>
               ) : (
-                <p className="text-sm text-gray-500">Not connected</p>
+                <p className="text-sm text-sky-500 font-medium">Not connected</p>
               )}
             </div>
           </div>
@@ -300,13 +300,13 @@ export default function PlatformConnections() {
               <button
                 onClick={() => handleSyncGames('steam')}
                 disabled={syncStatus.steam}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold py-2 px-4 rounded-xl disabled:opacity-50 transition-all shadow-lg hover:shadow-xl glow-soft"
               >
                 {syncStatus.steam ? 'Syncing...' : 'Sync Games'}
               </button>
               <button
                 onClick={() => handleDisconnect('steam')}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                className="bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-semibold py-2 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl glow-soft"
               >
                 Disconnect
               </button>
@@ -321,7 +321,7 @@ export default function PlatformConnections() {
               <button
                 onClick={handleConnectSteamOpenID}
                 disabled={connecting === 'steam'}
-                className="w-full bg-[#1b2838] hover:bg-[#2a475e] text-white font-bold py-3 px-4 rounded flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+                className="w-full bg-gradient-to-r from-[#1b2838] to-[#2a475e] hover:from-[#2a475e] hover:to-[#3d5a7a] text-white font-semibold py-3 px-4 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl glow-soft"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.568 8.16c-.169 0-.315.06-.459.144l-3.433 2.49-2.785-2.055a1.368 1.368 0 0 0-1.573 0l-5.785 4.276c-.459.315-.459.861 0 1.176l5.785 4.276c.315.228.744.228 1.057 0l5.785-4.276c.459-.315.459-.861 0-1.176l-2.785-2.055 3.433-2.49c.144-.084.288-.144.459-.144.744 0 1.347.603 1.347 1.347s-.603 1.347-1.347 1.347z"/>
@@ -333,7 +333,7 @@ export default function PlatformConnections() {
                 <button
                   type="button"
                   onClick={() => setShowManualSteamInput(!showManualSteamInput)}
-                  className="text-sm text-gray-600 hover:text-gray-800 underline"
+                  className="text-sm text-cyan-600 hover:text-cyan-500 font-medium underline transition-colors"
                 >
                   {showManualSteamInput ? 'Hide' : 'Or connect manually with Steam ID'}
                 </button>
@@ -342,9 +342,9 @@ export default function PlatformConnections() {
 
             {/* Manual input (collapsible) */}
             {showManualSteamInput && (
-              <div className="space-y-3 pt-3 border-t border-gray-200">
+              <div className="space-y-3 pt-3 border-t border-white/30">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-sky-700 mb-2 font-semibold">
                     Steam Profile URL or Steam ID
                   </label>
                   <input
@@ -352,18 +352,18 @@ export default function PlatformConnections() {
                     value={steamId}
                     onChange={(e) => setSteamId(e.target.value)}
                     placeholder="Paste your Steam profile URL (steamcommunity.com/profiles/...) or Steam ID"
-                    className="border border-gray-300 rounded-md px-3 py-2 w-full"
+                    className="glass-strong rounded-xl px-3 py-2 w-full text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all"
                   />
-                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-2">
-                    <p className="text-xs text-blue-900 font-medium mb-2">How to connect manually:</p>
-                    <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
-                      <li>Open your <a href="https://steamcommunity.com/my/profile" target="_blank" rel="noopener noreferrer" className="underline font-medium">Steam profile page</a></li>
+                  <div className="bg-cyan-100/40 backdrop-blur-sm border border-cyan-300/50 rounded-xl p-3 mt-2">
+                    <p className="text-xs text-cyan-900 font-semibold mb-2">How to connect manually:</p>
+                    <ol className="text-xs text-cyan-800 space-y-1 list-decimal list-inside font-medium">
+                      <li>Open your <a href="https://steamcommunity.com/my/profile" target="_blank" rel="noopener noreferrer" className="underline font-semibold">Steam profile page</a></li>
                       <li>Copy the entire URL from your browser</li>
                       <li>Paste it above (we'll automatically extract your Steam ID)</li>
                     </ol>
-                    <div className="mt-2 pt-2 border-t border-blue-300">
-                      <p className="text-xs text-blue-900 font-medium mb-1">⚠️ Important Privacy Settings:</p>
-                      <p className="text-xs text-blue-800">
+                    <div className="mt-2 pt-2 border-t border-cyan-300/50">
+                      <p className="text-xs text-cyan-900 font-semibold mb-1">⚠️ Important Privacy Settings:</p>
+                      <p className="text-xs text-cyan-800 font-medium">
                         Your Steam profile must be set to <strong>public</strong>. Go to Steam → Settings → Privacy → Profile Status: <strong>Public</strong>. Also ensure "Game details" are visible.
                       </p>
                     </div>
@@ -372,7 +372,7 @@ export default function PlatformConnections() {
                 <button
                   onClick={handleConnectSteam}
                   disabled={connecting === 'steam' || !steamId}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 w-full"
+                  className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold py-2 px-4 rounded-xl disabled:opacity-50 w-full transition-all shadow-lg hover:shadow-xl glow-soft"
                 >
                   {connecting === 'steam' ? 'Connecting...' : 'Connect with Steam ID'}
                 </button>
@@ -382,13 +382,13 @@ export default function PlatformConnections() {
         )}
 
         {getConnectedPlatform('steam')?.gamesData && Array.isArray(getConnectedPlatform('steam')?.gamesData) && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <h4 className="font-semibold mb-2">Your Games ({getConnectedPlatform('steam')?.gamesData.length})</h4>
+          <div className="mt-4 pt-4 border-t border-white/30">
+            <h4 className="font-semibold mb-2 text-sky-800">Your Games ({getConnectedPlatform('steam')?.gamesData.length})</h4>
             <div className="max-h-60 overflow-y-auto space-y-2">
               {getConnectedPlatform('steam')?.gamesData.slice(0, 10).map((game: any, idx: number) => (
-                <div key={idx} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded">
-                  <span className="font-medium">{game.name}</span>
-                  <div className="text-gray-600 text-xs">
+                <div key={idx} className="flex justify-between items-center text-sm glass rounded-xl p-2">
+                  <span className="font-semibold text-sky-800">{game.name}</span>
+                  <div className="text-sky-600 text-xs font-medium">
                     {game.playtimeHours}h
                     {game.lastPlayed && (
                       <span className="ml-2">
@@ -403,7 +403,7 @@ export default function PlatformConnections() {
                 </div>
               ))}
               {getConnectedPlatform('steam')?.gamesData.length > 10 && (
-                <p className="text-xs text-gray-500 text-center pt-2">
+                <p className="text-xs text-sky-600 text-center pt-2 font-medium">
                   ... and {getConnectedPlatform('steam')!.gamesData.length - 10} more games
                 </p>
               )}
@@ -413,18 +413,18 @@ export default function PlatformConnections() {
       </div>
 
       {/* Xbox Connection */}
-      <div className="bg-white rounded-lg shadow-md p-6 border-2 border-green-200">
+      <div className="glass-strong rounded-2xl shadow-xl p-6 border-2 border-emerald-300/50 hover:shadow-2xl transition-all">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <img src={PLATFORM_INFO.xbox.icon} alt="Xbox logo" className="w-8 h-8 object-contain" />
             <div>
-              <h3 className="text-xl font-semibold">Xbox</h3>
+              <h3 className="text-xl font-semibold text-sky-800">Xbox</h3>
               {getConnectedPlatform('xbox') ? (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-sky-600 font-medium">
                   Connected • Last synced: {formatDate(getConnectedPlatform('xbox')!.lastSyncedAt)}
                 </p>
               ) : (
-                <p className="text-sm text-gray-500">Not connected</p>
+                <p className="text-sm text-sky-500 font-medium">Not connected</p>
               )}
             </div>
           </div>
@@ -433,13 +433,13 @@ export default function PlatformConnections() {
               <button
                 onClick={() => handleSyncGames('xbox')}
                 disabled={syncStatus.xbox}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-semibold py-2 px-4 rounded-xl disabled:opacity-50 transition-all shadow-lg hover:shadow-xl glow-soft"
               >
                 {syncStatus.xbox ? 'Syncing...' : 'Sync Games'}
               </button>
               <button
                 onClick={() => handleDisconnect('xbox')}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                className="bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-semibold py-2 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl glow-soft"
               >
                 Disconnect
               </button>
@@ -459,7 +459,7 @@ export default function PlatformConnections() {
                   window.open('https://account.xbox.com/Profile', '_blank');
                 }}
                 disabled={connecting === 'xbox'}
-                className="w-full bg-[#107c10] hover:bg-[#0e6b0e] text-white font-bold py-3 px-4 rounded flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+                className="w-full bg-gradient-to-r from-[#107c10] to-[#0e6b0e] hover:from-[#0e6b0e] hover:to-[#0c5a0c] text-white font-semibold py-3 px-4 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl glow-soft"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm-1-13h2v6h-2V7zm0 8h2v2h-2v-2z"/>
@@ -471,7 +471,7 @@ export default function PlatformConnections() {
                 <button
                   type="button"
                   onClick={() => setShowManualXboxInput(!showManualXboxInput)}
-                  className="text-sm text-gray-600 hover:text-gray-800 underline"
+                  className="text-sm text-emerald-600 hover:text-emerald-500 font-medium underline transition-colors"
                 >
                   {showManualXboxInput ? 'Hide' : 'Or connect manually with Xbox User ID'}
                 </button>
@@ -480,9 +480,9 @@ export default function PlatformConnections() {
 
             {/* Manual input (collapsible) */}
             {showManualXboxInput && (
-              <div className="space-y-3 pt-3 border-t border-gray-200">
+              <div className="space-y-3 pt-3 border-t border-white/30">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-sky-700 mb-2 font-semibold">
                     Xbox User ID (Gamertag)
                   </label>
                   <input
@@ -490,19 +490,19 @@ export default function PlatformConnections() {
                     value={xboxUserId}
                     onChange={(e) => setXboxUserId(e.target.value)}
                     placeholder="Enter your Xbox Gamertag or User ID"
-                    className="border border-gray-300 rounded-md px-3 py-2 w-full"
+                    className="glass-strong rounded-xl px-3 py-2 w-full text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 transition-all"
                   />
-                  <div className="bg-green-50 border border-green-200 rounded-md p-3 mt-2">
-                    <p className="text-xs text-green-900 font-medium mb-2">How to find your Xbox User ID:</p>
-                    <ol className="text-xs text-green-800 space-y-1 list-decimal list-inside">
-                      <li>Visit <a href="https://account.xbox.com/Profile" target="_blank" rel="noopener noreferrer" className="underline font-medium">Xbox Profile</a></li>
+                  <div className="bg-emerald-100/40 backdrop-blur-sm border border-emerald-300/50 rounded-xl p-3 mt-2">
+                    <p className="text-xs text-emerald-900 font-semibold mb-2">How to find your Xbox User ID:</p>
+                    <ol className="text-xs text-emerald-800 space-y-1 list-decimal list-inside font-medium">
+                      <li>Visit <a href="https://account.xbox.com/Profile" target="_blank" rel="noopener noreferrer" className="underline font-semibold">Xbox Profile</a></li>
                       <li>Sign in with your Microsoft account</li>
                       <li>Your <strong>Gamertag</strong> is displayed at the top of your profile</li>
                       <li>Copy it and paste above</li>
                     </ol>
-                    <div className="mt-2 pt-2 border-t border-green-300">
-                      <p className="text-xs text-green-900 font-medium mb-1">⚠️ Note:</p>
-                      <p className="text-xs text-green-800">
+                    <div className="mt-2 pt-2 border-t border-emerald-300/50">
+                      <p className="text-xs text-emerald-900 font-semibold mb-1">⚠️ Note:</p>
+                      <p className="text-xs text-emerald-800 font-medium">
                         Full game syncing requires additional Microsoft OAuth setup. Basic connection is available now!
                       </p>
                     </div>
@@ -511,7 +511,7 @@ export default function PlatformConnections() {
                 <button
                   onClick={handleConnectXbox}
                   disabled={connecting === 'xbox' || !xboxUserId}
-                  className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 w-full"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-semibold py-2 px-4 rounded-xl disabled:opacity-50 w-full transition-all shadow-lg hover:shadow-xl glow-soft"
                 >
                   {connecting === 'xbox' ? 'Connecting...' : 'Connect with Xbox User ID'}
                 </button>
@@ -521,13 +521,13 @@ export default function PlatformConnections() {
         )}
 
         {getConnectedPlatform('xbox')?.gamesData && Array.isArray(getConnectedPlatform('xbox')?.gamesData) && getConnectedPlatform('xbox')!.gamesData.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <h4 className="font-semibold mb-2">Your Games ({getConnectedPlatform('xbox')?.gamesData.length})</h4>
+          <div className="mt-4 pt-4 border-t border-white/30">
+            <h4 className="font-semibold mb-2 text-sky-800">Your Games ({getConnectedPlatform('xbox')?.gamesData.length})</h4>
             <div className="max-h-60 overflow-y-auto space-y-2">
               {getConnectedPlatform('xbox')?.gamesData.slice(0, 10).map((game: any, idx: number) => (
-                <div key={idx} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded">
-                  <span className="font-medium">{game.name}</span>
-                  <div className="text-gray-600 text-xs">
+                <div key={idx} className="flex justify-between items-center text-sm glass rounded-xl p-2">
+                  <span className="font-semibold text-sky-800">{game.name}</span>
+                  <div className="text-sky-600 text-xs font-medium">
                     {game.playtimeHours}h
                     {game.lastPlayed && (
                       <span className="ml-2">
@@ -542,7 +542,7 @@ export default function PlatformConnections() {
                 </div>
               ))}
               {getConnectedPlatform('xbox')?.gamesData.length > 10 && (
-                <p className="text-xs text-gray-500 text-center pt-2">
+                <p className="text-xs text-sky-600 text-center pt-2 font-medium">
                   ... and {getConnectedPlatform('xbox')!.gamesData.length - 10} more games
                 </p>
               )}
@@ -552,18 +552,18 @@ export default function PlatformConnections() {
       </div>
 
       {/* PlayStation Connection */}
-      <div className="bg-white rounded-lg shadow-md p-6 border-2 border-blue-200">
+      <div className="glass-strong rounded-2xl shadow-xl p-6 border-2 border-blue-300/50 hover:shadow-2xl transition-all">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <img src={PLATFORM_INFO.playstation.icon} alt="PlayStation logo" className="w-8 h-8 object-contain" />
             <div>
-              <h3 className="text-xl font-semibold">PlayStation</h3>
+              <h3 className="text-xl font-semibold text-sky-800">PlayStation</h3>
               {getConnectedPlatform('playstation') ? (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-sky-600 font-medium">
                   Connected • Last synced: {formatDate(getConnectedPlatform('playstation')!.lastSyncedAt)}
                 </p>
               ) : (
-                <p className="text-sm text-gray-500">Not connected</p>
+                <p className="text-sm text-sky-500 font-medium">Not connected</p>
               )}
             </div>
           </div>
@@ -572,13 +572,13 @@ export default function PlatformConnections() {
               <button
                 onClick={() => handleSyncGames('playstation')}
                 disabled={syncStatus.playstation}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-semibold py-2 px-4 rounded-xl disabled:opacity-50 transition-all shadow-lg hover:shadow-xl glow-soft"
               >
                 {syncStatus.playstation ? 'Syncing...' : 'Sync Games'}
               </button>
               <button
                 onClick={() => handleDisconnect('playstation')}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                className="bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-semibold py-2 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl glow-soft"
               >
                 Disconnect
               </button>
@@ -599,7 +599,7 @@ export default function PlatformConnections() {
                   }
                 }}
                 disabled={connecting === 'playstation'}
-                className="w-full bg-[#003087] hover:bg-[#0045a0] text-white font-bold py-3 px-4 rounded flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+                className="w-full bg-gradient-to-r from-[#003087] to-[#0045a0] hover:from-[#0045a0] hover:to-[#0055c0] text-white font-semibold py-3 px-4 rounded-2xl flex items-center justify-center gap-2 disabled:opacity-50 transition-all shadow-lg hover:shadow-xl glow-soft"
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8.986 2.508c-.808 0-1.582.209-2.26.563a5.203 5.203 0 0 0-2.168 2.168 5.227 5.227 0 0 0-.563 2.26c0 .808.209 1.582.563 2.26a5.203 5.203 0 0 0 2.168 2.168 5.227 5.227 0 0 0 2.26.563h6.028c.808 0 1.582-.209 2.26-.563a5.203 5.203 0 0 0 2.168-2.168 5.227 5.227 0 0 0 .563-2.26 5.227 5.227 0 0 0-.563-2.26 5.203 5.203 0 0 0-2.168-2.168 5.227 5.227 0 0 0-2.26-.563H8.986zm0 2.02h6.028c.485 0 .95.126 1.356.35a3.123 3.123 0 0 1 1.301 1.301c.224.406.35.871.35 1.356s-.126.95-.35 1.356a3.123 3.123 0 0 1-1.301 1.301c-.406.224-.871.35-1.356.35H8.986c-.485 0-.95-.126-1.356-.35a3.123 3.123 0 0 1-1.301-1.301 3.137 3.137 0 0 1-.35-1.356c0-.485.126-.95.35-1.356a3.123 3.123 0 0 1 1.301-1.301c.406-.224.871-.35 1.356-.35zM12 9.504c-1.381 0-2.5 1.119-2.5 2.5s1.119 2.5 2.5 2.5 2.5-1.119 2.5-2.5-1.119-2.5-2.5-2.5zm0 2.02c.276 0 .5.224.5.5s-.224.5-.5.5-.5-.224-.5-.5.224-.5.5-.5zm0-7.536c-1.381 0-2.5 1.119-2.5 2.5s1.119 2.5 2.5 2.5 2.5-1.119 2.5-2.5-1.119-2.5-2.5-2.5zm0 2.02c.276 0 .5.224.5.5s-.224.5-.5.5-.5-.224-.5-.5.224-.5.5-.5z"/>
@@ -611,7 +611,7 @@ export default function PlatformConnections() {
                 <button
                   type="button"
                   onClick={() => setShowManualPSNInput(!showManualPSNInput)}
-                  className="text-sm text-gray-600 hover:text-gray-800 underline"
+                  className="text-sm text-blue-600 hover:text-blue-500 font-medium underline transition-colors"
                 >
                   {showManualPSNInput ? 'Hide' : 'Or connect manually with NPSSO token'}
                 </button>
@@ -620,9 +620,9 @@ export default function PlatformConnections() {
 
             {/* Manual input (collapsible) */}
             {showManualPSNInput && (
-              <div className="space-y-3 pt-3 border-t border-gray-200">
+              <div className="space-y-3 pt-3 border-t border-white/30">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-sky-700 mb-2 font-semibold">
                     PSN NPSSO Token
                   </label>
                   <input
@@ -630,23 +630,23 @@ export default function PlatformConnections() {
                     value={psnNpso}
                     onChange={(e) => setPsnNpso(e.target.value)}
                     placeholder="Enter your PSN NPSSO token"
-                    className="border border-gray-300 rounded-md px-3 py-2 w-full"
+                    className="glass-strong rounded-xl px-3 py-2 w-full text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-blue-400/50 transition-all"
                   />
-                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-2">
-                    <p className="text-xs text-blue-900 font-medium mb-2">How to get your NPSSO token:</p>
-                    <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
-                      <li>Sign in to <a href="https://www.playstation.com/en-us/playstation-network/" target="_blank" rel="noopener noreferrer" className="underline font-medium">playstation.com</a></li>
-                      <li>In the <strong>same browser</strong> (while still signed in), visit: <a href="https://ca.account.sony.com/api/v1/ssocookie" target="_blank" rel="noopener noreferrer" className="underline font-medium">Get NPSSO Token</a></li>
-                      <li>Copy the <code className="bg-blue-100 px-1 rounded">npsso</code> value from the JSON response</li>
+                  <div className="bg-blue-100/40 backdrop-blur-sm border border-blue-300/50 rounded-xl p-3 mt-2">
+                    <p className="text-xs text-blue-900 font-semibold mb-2">How to get your NPSSO token:</p>
+                    <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside font-medium">
+                      <li>Sign in to <a href="https://www.playstation.com/en-us/playstation-network/" target="_blank" rel="noopener noreferrer" className="underline font-semibold">playstation.com</a></li>
+                      <li>In the <strong>same browser</strong> (while still signed in), visit: <a href="https://ca.account.sony.com/api/v1/ssocookie" target="_blank" rel="noopener noreferrer" className="underline font-semibold">Get NPSSO Token</a></li>
+                      <li>Copy the <code className="bg-blue-200/50 px-1 rounded">npsso</code> value from the JSON response</li>
                       <li>Paste it above</li>
                     </ol>
-                    <p className="text-xs text-blue-700 mt-2">💡 <strong>Tip:</strong> Keep this token secure! It's like your password.</p>
+                    <p className="text-xs text-blue-700 mt-2 font-medium">💡 <strong>Tip:</strong> Keep this token secure! It's like your password.</p>
                   </div>
                 </div>
                 <button
                   onClick={handleConnectPSN}
                   disabled={connecting === 'playstation' || !psnNpso}
-                  className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50 w-full"
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-semibold py-2 px-4 rounded-xl disabled:opacity-50 w-full transition-all shadow-lg hover:shadow-xl glow-soft"
                 >
                   {connecting === 'playstation' ? 'Connecting...' : 'Connect with NPSSO Token'}
                 </button>
@@ -656,13 +656,13 @@ export default function PlatformConnections() {
         )}
 
         {getConnectedPlatform('playstation')?.gamesData && Array.isArray(getConnectedPlatform('playstation')?.gamesData) && getConnectedPlatform('playstation')!.gamesData.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <h4 className="font-semibold mb-2">Your Games ({getConnectedPlatform('playstation')?.gamesData.length})</h4>
+          <div className="mt-4 pt-4 border-t border-white/30">
+            <h4 className="font-semibold mb-2 text-sky-800">Your Games ({getConnectedPlatform('playstation')?.gamesData.length})</h4>
             <div className="max-h-60 overflow-y-auto space-y-2">
               {getConnectedPlatform('playstation')?.gamesData.slice(0, 10).map((game: any, idx: number) => (
-                <div key={idx} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded">
-                  <span className="font-medium">{game.name}</span>
-                  <div className="text-gray-600 text-xs">
+                <div key={idx} className="flex justify-between items-center text-sm glass rounded-xl p-2">
+                  <span className="font-semibold text-sky-800">{game.name}</span>
+                  <div className="text-sky-600 text-xs font-medium">
                     {game.playtimeHours}h
                     {game.lastPlayed && (
                       <span className="ml-2">
@@ -677,7 +677,7 @@ export default function PlatformConnections() {
                 </div>
               ))}
               {getConnectedPlatform('playstation')?.gamesData.length > 10 && (
-                <p className="text-xs text-gray-500 text-center pt-2">
+                <p className="text-xs text-sky-600 text-center pt-2 font-medium">
                   ... and {getConnectedPlatform('playstation')!.gamesData.length - 10} more games
                 </p>
               )}

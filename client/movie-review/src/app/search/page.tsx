@@ -108,16 +108,16 @@ function SearchPageInner() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-sky-300 via-cyan-200 to-teal-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900text-white mb-4">Search</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent mb-4 drop-shadow-md">Search</h1>
           <form onSubmit={handleSearch} className="max-w-2xl">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg
-                  className="h-5 w-5 text-gray-400"
+                  className="h-5 w-5 text-sky-600"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
@@ -134,7 +134,7 @@ function SearchPageInner() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search for games, movies, TV shows..."
-                className="block w-full pl-10 pr-4 py-3 border border-gray-300border-gray-700 rounded-lg bg-whitebg-gray-800 text-gray-900text-white placeholder-gray-500placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="block w-full pl-10 pr-4 py-3 glass-strong rounded-2xl text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 transition-all"
               />
             </div>
           </form>
@@ -144,44 +144,44 @@ function SearchPageInner() {
           <>
             {/* Tabs */}
             <div className="mb-6">
-              <div className="border-b border-gray-200border-gray-700">
+              <div className="border-b border-white/30">
                 <nav className="-mb-px flex space-x-8">
                   <button
                     onClick={() => setActiveTab('games')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-2 px-1 border-b-2 font-medium text-sm transition-all ${
                       activeTab === 'games'
-                        ? 'border-blue-500border-blue-400 text-blue-600text-blue-400'
-                        : 'border-transparent text-gray-500text-gray-400 hover:text-gray-700hover:text-gray-300 hover:border-gray-300hover:border-gray-600'
+                        ? 'border-cyan-500 text-cyan-600'
+                        : 'border-transparent text-sky-700 hover:text-cyan-600 hover:border-cyan-300/50'
                     }`}
                   >
                     Games ({games.length})
                   </button>
                   <button
                     onClick={() => setActiveTab('movies')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-2 px-1 border-b-2 font-medium text-sm transition-all ${
                       activeTab === 'movies'
-                        ? 'border-blue-500border-blue-400 text-blue-600text-blue-400'
-                        : 'border-transparent text-gray-500text-gray-400 hover:text-gray-700hover:text-gray-300 hover:border-gray-300hover:border-gray-600'
+                        ? 'border-cyan-500 text-cyan-600'
+                        : 'border-transparent text-sky-700 hover:text-cyan-600 hover:border-cyan-300/50'
                     }`}
                   >
                     Movies ({movies.length})
                   </button>
                   <button
                     onClick={() => setActiveTab('tv')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-2 px-1 border-b-2 font-medium text-sm transition-all ${
                       activeTab === 'tv'
-                        ? 'border-blue-500border-blue-400 text-blue-600text-blue-400'
-                        : 'border-transparent text-gray-500text-gray-400 hover:text-gray-700hover:text-gray-300 hover:border-gray-300hover:border-gray-600'
+                        ? 'border-cyan-500 text-cyan-600'
+                        : 'border-transparent text-sky-700 hover:text-cyan-600 hover:border-cyan-300/50'
                     }`}
                   >
                     TV Shows ({tvShows.length})
                   </button>
                   <button
                     onClick={() => setActiveTab('users')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-2 px-1 border-b-2 font-medium text-sm transition-all ${
                       activeTab === 'users'
-                        ? 'border-blue-500border-blue-400 text-blue-600text-blue-400'
-                        : 'border-transparent text-gray-500text-gray-400 hover:text-gray-700hover:text-gray-300 hover:border-gray-300hover:border-gray-600'
+                        ? 'border-cyan-500 text-cyan-600'
+                        : 'border-transparent text-sky-700 hover:text-cyan-600 hover:border-cyan-300/50'
                     }`}
                   >
                     Users ({users.length})
@@ -192,7 +192,7 @@ function SearchPageInner() {
 
             {loading ? (
               <div className="text-center py-12">
-                <div className="text-xl text-gray-600text-gray-400">Searching...</div>
+                <div className="text-xl text-sky-700 font-medium">Searching...</div>
               </div>
             ) : (
               <>
@@ -200,8 +200,8 @@ function SearchPageInner() {
                 {activeTab === 'games' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {games.map(game => (
-                      <div key={game.id} className="bg-whitebg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                        <div className="aspect-[2/3] bg-gray-200bg-gray-700 flex items-center justify-center overflow-hidden">
+                      <div key={game.id} className="glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105">
+                        <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
                           {game.cover?.image_id ? (
                             <img
                               src={getCoverImageUrl(game.cover.image_id, 'cover_big')}
@@ -209,20 +209,20 @@ function SearchPageInner() {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-gray-500text-gray-400">No Cover</span>
+                            <span className="text-sky-600 font-medium">No Cover</span>
                           )}
                         </div>
                         <div className="p-4">
-                          <h3 className="font-semibold text-lg mb-2 text-gray-900text-white">{game.name}</h3>
+                          <h3 className="font-semibold text-lg mb-2 text-sky-800">{game.name}</h3>
                           {game.first_release_date && (
-                            <p className="text-gray-600text-gray-400 mb-2 text-sm">
+                            <p className="text-sky-600 mb-2 text-sm">
                               {new Date(game.first_release_date * 1000).getFullYear()}
                             </p>
                           )}
                           {game.rating && (
                             <div className="flex items-center">
-                              <span className="text-yellow-500">⭐</span>
-                              <span className="ml-1 text-sm font-medium text-gray-900text-white">{(game.rating / 10).toFixed(1)}/10</span>
+                              <span className="text-amber-500">⭐</span>
+                              <span className="ml-1 text-sm font-medium text-sky-800">{(game.rating / 10).toFixed(1)}/10</span>
                             </div>
                           )}
                         </div>
@@ -235,8 +235,8 @@ function SearchPageInner() {
                 {activeTab === 'movies' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {movies.map(movie => (
-                      <div key={movie.id} className="bg-whitebg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                        <div className="aspect-[2/3] bg-gray-200bg-gray-700 flex items-center justify-center overflow-hidden">
+                      <div key={movie.id} className="glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105">
+                        <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
                           {movie.poster ? (
                             <img
                               src={movie.poster}
@@ -244,16 +244,16 @@ function SearchPageInner() {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-gray-500text-gray-400">No Poster</span>
+                            <span className="text-sky-600 font-medium">No Poster</span>
                           )}
                         </div>
                         <div className="p-4">
-                          <h3 className="font-semibold text-lg mb-2 text-gray-900text-white">{movie.title}</h3>
-                          <p className="text-gray-600text-gray-400 mb-2 text-sm">{movie.year}</p>
+                          <h3 className="font-semibold text-lg mb-2 text-sky-800">{movie.title}</h3>
+                          <p className="text-sky-600 mb-2 text-sm">{movie.year}</p>
                           {movie.rating && (
                             <div className="flex items-center">
-                              <span className="text-yellow-500">⭐</span>
-                              <span className="ml-1 text-sm font-medium text-gray-900text-white">{movie.rating}/10</span>
+                              <span className="text-amber-500">⭐</span>
+                              <span className="ml-1 text-sm font-medium text-sky-800">{movie.rating}/10</span>
                             </div>
                           )}
                         </div>
@@ -266,8 +266,8 @@ function SearchPageInner() {
                 {activeTab === 'tv' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {tvShows.map(tv => (
-                      <div key={tv.id} className="bg-whitebg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                        <div className="aspect-[2/3] bg-gray-200bg-gray-700 flex items-center justify-center overflow-hidden">
+                      <div key={tv.id} className="glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105">
+                        <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
                           {tv.poster ? (
                             <img
                               src={tv.poster}
@@ -275,16 +275,16 @@ function SearchPageInner() {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-gray-500text-gray-400">No Poster</span>
+                            <span className="text-sky-600 font-medium">No Poster</span>
                           )}
                         </div>
                         <div className="p-4">
-                          <h3 className="font-semibold text-lg mb-2 text-gray-900text-white">{tv.title}</h3>
-                          <p className="text-gray-600text-gray-400 mb-2 text-sm">{tv.year}</p>
+                          <h3 className="font-semibold text-lg mb-2 text-sky-800">{tv.title}</h3>
+                          <p className="text-sky-600 mb-2 text-sm">{tv.year}</p>
                           {tv.rating && (
                             <div className="flex items-center">
-                              <span className="text-yellow-500">⭐</span>
-                              <span className="ml-1 text-sm font-medium text-gray-900text-white">{tv.rating}/10</span>
+                              <span className="text-amber-500">⭐</span>
+                              <span className="ml-1 text-sm font-medium text-sky-800">{tv.rating}/10</span>
                             </div>
                           )}
                         </div>
@@ -297,16 +297,16 @@ function SearchPageInner() {
                 {activeTab === 'users' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {users.map(user => (
-                      <div key={user.id} className="bg-whitebg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                      <div key={user.id} className="glass-strong rounded-2xl p-6 hover:shadow-2xl transition-all transform hover:scale-105">
                         <div className="flex items-center space-x-4">
                           <img
                             src={user.profilePicture || '/default.jpg'}
                             alt={user.username}
-                            className="w-12 h-12 rounded-full"
+                            className="w-12 h-12 rounded-full ring-2 ring-cyan-300/50"
                           />
                           <div>
-                            <h3 className="font-semibold text-lg text-gray-900text-white">{user.username}</h3>
-                            <p className="text-gray-600text-gray-400 text-sm">Movie Enthusiast</p>
+                            <h3 className="font-semibold text-lg text-sky-800">{user.username}</h3>
+                            <p className="text-sky-600 text-sm">Movie Enthusiast</p>
                           </div>
                         </div>
                       </div>
@@ -317,25 +317,25 @@ function SearchPageInner() {
                 {/* No Results */}
                 {!loading && activeTab === 'games' && games.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-gray-500text-gray-400 text-lg">No games found for "{query}"</p>
+                    <p className="text-sky-700 text-lg font-medium">No games found for "{query}"</p>
                   </div>
                 )}
 
                 {!loading && activeTab === 'movies' && movies.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-gray-500text-gray-400 text-lg">No movies found for "{query}"</p>
+                    <p className="text-sky-700 text-lg font-medium">No movies found for "{query}"</p>
                   </div>
                 )}
 
                 {!loading && activeTab === 'tv' && tvShows.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-gray-500text-gray-400 text-lg">No TV shows found for "{query}"</p>
+                    <p className="text-sky-700 text-lg font-medium">No TV shows found for "{query}"</p>
                   </div>
                 )}
 
                 {!loading && activeTab === 'users' && users.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-gray-500text-gray-400 text-lg">No users found for "{query}"</p>
+                    <p className="text-sky-700 text-lg font-medium">No users found for "{query}"</p>
                   </div>
                 )}
               </>
@@ -345,7 +345,7 @@ function SearchPageInner() {
 
         {!query && (
           <div className="text-center py-12">
-            <p className="text-gray-500text-gray-400 text-lg">Enter a search term to find games, movies, and TV shows</p>
+            <p className="text-sky-700 text-lg font-medium">Enter a search term to find games, movies, and TV shows</p>
           </div>
         )}
       </div>

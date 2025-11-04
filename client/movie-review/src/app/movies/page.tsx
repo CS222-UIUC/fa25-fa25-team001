@@ -96,14 +96,14 @@ export default function MoviesPage() {
   }, [movies, sortBy]);
 
   return (
-    <div className="min-h-screen bg-gray-50bg-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-sky-300 via-cyan-200 to-teal-300">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900text-white mb-2">Movies</h1>
-          <p className="text-lg text-gray-600text-gray-400">Search and discover movies</p>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent mb-2 drop-shadow-md">Movies</h1>
+          <p className="text-lg text-sky-700 font-medium">Search and discover movies</p>
         </div>
 
         {/* Search Bar */}
@@ -114,12 +114,12 @@ export default function MoviesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for movies..."
-              className="flex-1 px-4 py-3 border border-gray-300border-gray-700 rounded-lg bg-whitebg-gray-800 text-gray-900text-white placeholder-gray-500placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-lg"
+              className="flex-1 px-4 py-3 glass-strong rounded-2xl text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 text-lg transition-all"
             />
             <button
               type="submit"
               disabled={loading}
-              className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-2xl transition-all shadow-lg hover:shadow-xl glow-soft disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Searching...' : 'Search'}
             </button>
@@ -128,7 +128,7 @@ export default function MoviesPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-8 bg-red-50bg-red-900/20 border border-red-200border-red-800 text-red-700text-red-400 px-4 py-3 rounded-lg">
+          <div className="mb-8 bg-gradient-to-r from-pink-200/40 to-rose-200/40 backdrop-blur-md border border-pink-300/50 text-rose-800 px-4 py-3 rounded-2xl shadow-lg">
             {error}
           </div>
         )}
@@ -139,18 +139,18 @@ export default function MoviesPage() {
             {movies.length > 0 ? (
               <>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-semibold text-gray-900text-white">
+                  <h2 className="text-2xl font-semibold text-sky-800">
                     Results ({movies.length})
                   </h2>
                   <div className="flex items-center gap-2">
-                    <label htmlFor="sort" className="text-sm font-medium text-gray-700text-gray-300">
+                    <label htmlFor="sort" className="text-sm font-medium text-sky-700">
                       Sort by:
                     </label>
                     <select
                       id="sort"
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value as SortOption)}
-                      className="px-3 py-2 border border-gray-300border-gray-700 rounded-lg bg-whitebg-gray-800 text-gray-900text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="px-3 py-2 glass-strong rounded-xl text-sky-900 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all"
                     >
                       <option value="year-newest">Release Date (Newest)</option>
                       <option value="year-oldest">Release Date (Oldest)</option>
@@ -163,28 +163,28 @@ export default function MoviesPage() {
                     <a
                       key={`${movie.imdbID}-${index}`}
                       href={`/movies/${movie.imdbID}`}
-                      className="group bg-whitebg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow"
+                      className="group glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105"
                     >
-                      <div className="aspect-[2/3] bg-gray-200bg-gray-700 overflow-hidden">
+                      <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 overflow-hidden rounded-t-2xl">
                         <img
                           src={movie.Poster && movie.Poster !== 'N/A' ? movie.Poster : getDefaultPoster()}
                           alt={movie.Title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
                       </div>
                       <div className="p-4">
-                        <h3 className="font-semibold text-gray-900text-white mb-1 line-clamp-2 group-hover:text-indigo-600group-hover:text-indigo-400 transition-colors">
+                        <h3 className="font-semibold text-sky-800 mb-1 line-clamp-2 group-hover:text-cyan-600 transition-colors">
                           {movie.Title}
                         </h3>
-                        <p className="text-sm text-gray-600text-gray-400">{movie.Year}</p>
+                        <p className="text-sm text-sky-600">{movie.Year}</p>
                       </div>
                     </a>
                   ))}
                 </div>
               </>
             ) : (
-              <div className="text-center py-12 bg-whitebg-gray-800 rounded-lg">
-                <p className="text-gray-500text-gray-400 text-lg">No movies found. Try a different search.</p>
+              <div className="text-center py-12 glass-strong rounded-2xl">
+                <p className="text-sky-700 text-lg font-medium">No movies found. Try a different search.</p>
               </div>
             )}
           </div>
@@ -193,22 +193,22 @@ export default function MoviesPage() {
         {/* Featured Movies - Show when no search */}
         {!searched && !loading && (
           <div>
-            <h2 className="text-2xl font-semibold mb-4 text-gray-900text-white">Featured Movies</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-sky-800">Featured Movies</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {['The Matrix', 'Inception', 'Interstellar', 'The Dark Knight'].map((title) => (
                 <div
                   key={title}
-                  className="bg-whitebg-gray-800 rounded-lg shadow-md overflow-hidden animate-pulse"
+                  className="glass-strong rounded-2xl overflow-hidden animate-pulse"
                 >
-                  <div className="aspect-[2/3] bg-gray-300bg-gray-700" />
+                  <div className="aspect-[2/3] bg-gradient-to-br from-cyan-200 to-teal-200" />
                   <div className="p-4">
-                    <div className="h-4 bg-gray-300bg-gray-700 rounded mb-2" />
-                    <div className="h-4 bg-gray-300bg-gray-700 rounded w-2/3" />
+                    <div className="h-4 bg-sky-300/50 rounded mb-2" />
+                    <div className="h-4 bg-sky-300/50 rounded w-2/3" />
                   </div>
                 </div>
               ))}
             </div>
-            <p className="text-center text-gray-500text-gray-400 mt-8">
+            <p className="text-center text-sky-700 mt-8 font-medium">
               Search for your favorite movies above!
             </p>
           </div>

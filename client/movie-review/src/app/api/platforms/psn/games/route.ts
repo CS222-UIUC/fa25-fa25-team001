@@ -1,13 +1,30 @@
+/**
+ * ============================================================================
+ * ROUTE: PlayStation Network (PSN) Games API
+ * ============================================================================
+ * 
+ * Endpoint: GET /api/platforms/psn/games
+ * Purpose: Fetch user's PlayStation games with playtime and trophy data
+ * 
+ * Authentication: Required (session-based, uses stored PSN tokens)
+ * 
+ * Returns: { success: true, games: [...] }
+ * 
+ * Features:
+ * - Fetches played games from PSN API
+ * - Includes playtime data (converted from ISO 8601 duration)
+ * - Merges trophy/title information
+ * - Automatically refreshes expired access tokens
+ * - Updates platform connection with latest data
+ * 
+ * ============================================================================
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
 import { getUserTitles, getUserPlayedGames, exchangeRefreshTokenForAuthTokens } from 'psn-api';
-
-/**
- * Fetch games from PSN API
- * GET /api/platforms/psn/games
- */
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

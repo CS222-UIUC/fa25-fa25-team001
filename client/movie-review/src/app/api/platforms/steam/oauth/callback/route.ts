@@ -1,15 +1,31 @@
+/**
+ * ============================================================================
+ * ROUTE: Steam OAuth Callback Handler
+ * ============================================================================
+ * 
+ * Endpoint: GET /api/platforms/steam/oauth/callback
+ * Purpose: Handle Steam OpenID authentication callback
+ * 
+ * Authentication: Required (session-based)
+ * 
+ * Query Parameters: Steam OpenID response parameters
+ * 
+ * Returns: Redirects to user profile page
+ * 
+ * Features:
+ * - Verifies OpenID response from Steam
+ * - Extracts Steam ID from OpenID response
+ * - Validates nonce and state tokens
+ * - Connects Steam account to user profile
+ * 
+ * ============================================================================
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { cookies } from 'next/headers';
 import { connectPlatform } from '@/actions/platform';
-
-/**
- * Steam OpenID Callback Handler
- * GET /api/platforms/steam/oauth/callback
- * 
- * Handles the redirect from Steam after authentication
- */
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
