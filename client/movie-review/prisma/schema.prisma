@@ -23,6 +23,11 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // Favorites (max 5 each)
+  favoriteGames     Json?  // Array of { id, title, posterUrl, platform }
+  favoriteMovies    Json?  // Array of { id, title, posterUrl, year }
+  favoriteTvShows   Json?  // Array of { id, title, posterUrl, year }
+
   // Media consumption tracking
   moviesWatched     MovieWatched[]
   videoGamesPlayed  VideoGamePlayed[]

@@ -87,7 +87,7 @@ export async function searchGames(query: string, limit: number = 24) {
   
   const body = `
     search "${escapedQuery}";
-    fields id,name,slug,summary,genres.name,platforms.name,rating,cover.image_id,
+    fields id,name,slug,summary,genres.name,platforms.name,platforms.id,rating,cover.image_id,
            release_dates.date,first_release_date;
     limit ${limit};
   `.trim();

@@ -44,6 +44,7 @@ declare module "next-auth" {
 }
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || "development-secret-key-change-in-production",
   session: {
     strategy: "jwt",
   },

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getUserPlatformConnections } from '@/actions/platform';
+import NintendoGamesManager from './NintendoGamesManager';
 
 interface PlatformConnection {
   id: string;
@@ -34,6 +35,13 @@ const PLATFORM_INFO = {
     icon: 'https://th.bing.com/th/id/R.cfb016ea519990f1f005f960c8463d60?rik=IksI2%2fGWtxNogQ&riu=http%3a%2f%2fpluspng.com%2fimg-png%2fplaystation-png-playstation-icon-512.png&ehk=3D4u7afiw1vNwCkR6Gp42plDgOizum%2fz%2bxDOL0fzVDM%3d&risl=&pid=ImgRaw&r=0',
     instructions: 'Enter your PSN NPSSO token',
     description: 'Link your PlayStation account to track playtime and trophies',
+  },
+  nintendo: {
+    name: 'Nintendo Switch',
+    color: 'bg-red-600',
+    icon: 'https://clipground.com/images/nintendo-switch-logo-png-4.png',
+    instructions: 'Manually add your Nintendo Switch games',
+    description: 'Manually track your Nintendo Switch games (no API available)',
   },
 };
 
@@ -194,6 +202,50 @@ export default function PlatformConnections() {
     }
   };
 
+  const handleConnectNintendo = async () => {
+    setConnecting('nintendo');
+    try {
+      const response = await fetch('/api/platforms/nintendo/connect', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        loadConnections();
+        alert('Nintendo account connected! You can now manually add games.');
+      } else {
+        alert(data.error || 'Failed to connect Nintendo account');
+      }
+    } catch (error) {
+      console.error('Error connecting Nintendo:', error);
+      alert('Failed to connect Nintendo account');
+    } finally {
+      setConnecting(null);
+    }
+  };
+
+  const handleUpdateNintendoGames = async (games: any[]) => {
+    try {
+      const response = await fetch('/api/platforms/nintendo/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ games }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        loadConnections();
+      } else {
+        alert(data.error || 'Failed to update Nintendo games');
+      }
+    } catch (error) {
+      console.error('Error updating Nintendo games:', error);
+      alert('Failed to update Nintendo games');
+    }
+  };
+
   const handleDisconnect = async (platformType: string) => {
     if (!confirm(`Disconnect your ${PLATFORM_INFO[platformType as keyof typeof PLATFORM_INFO]?.name} account?`)) {
       return;
@@ -226,6 +278,7 @@ export default function PlatformConnections() {
         'playstation': 'psn',
         'steam': 'steam',
         'xbox': 'xbox',
+        'nintendo': 'nintendo',
       };
       
       const apiEndpoint = platformApiMap[platformType] || platformType;
@@ -682,6 +735,60 @@ export default function PlatformConnections() {
                 </p>
               )}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Nintendo Connection */}
+      <div className="glass-strong rounded-2xl shadow-xl p-6 border-2 border-red-300/50 hover:shadow-2xl transition-all">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <img src={PLATFORM_INFO.nintendo.icon} alt="Nintendo logo" className="w-8 h-8 object-contain" />
+            <div>
+              <h3 className="text-xl font-semibold text-sky-800">Nintendo Switch</h3>
+              {getConnectedPlatform('nintendo') ? (
+                <p className="text-sm text-sky-600 font-medium">
+                  Connected • Last synced: {formatDate(getConnectedPlatform('nintendo')!.lastSyncedAt)}
+                </p>
+              ) : (
+                <p className="text-sm text-sky-500 font-medium">Not connected</p>
+              )}
+            </div>
+          </div>
+          {getConnectedPlatform('nintendo') && (
+            <button
+              onClick={() => handleDisconnect('nintendo')}
+              className="bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white font-semibold py-2 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl glow-soft"
+            >
+              Disconnect
+            </button>
+          )}
+        </div>
+
+        {!getConnectedPlatform('nintendo') && (
+          <div className="mt-4 space-y-3">
+            <div className="bg-amber-100/40 backdrop-blur-sm border border-amber-300/50 rounded-xl p-4">
+              <p className="text-sm text-amber-900 font-semibold mb-2">ℹ️ Manual Entry Required</p>
+              <p className="text-xs text-amber-800 font-medium">
+                Nintendo doesn't provide public API access. You can manually add and track your Nintendo Switch games here.
+              </p>
+            </div>
+            <button
+              onClick={handleConnectNintendo}
+              disabled={connecting === 'nintendo'}
+              className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold py-3 px-4 rounded-2xl disabled:opacity-50 transition-all shadow-lg hover:shadow-xl glow-soft"
+            >
+              {connecting === 'nintendo' ? 'Connecting...' : 'Connect Nintendo Switch'}
+            </button>
+          </div>
+        )}
+
+        {getConnectedPlatform('nintendo') && (
+          <div className="mt-4 pt-4 border-t border-white/30">
+            <NintendoGamesManager
+              games={(getConnectedPlatform('nintendo')?.gamesData as any)?.games || []}
+              onGamesUpdate={handleUpdateNintendoGames}
+            />
           </div>
         )}
       </div>

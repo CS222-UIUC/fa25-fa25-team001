@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { getUserProfile, updateUserProfile } from "@/actions/user";
 import { uploadProfilePicture } from "@/actions/upload";
 import PlatformConnections from "@/components/PlatformConnections";
+import FavoritesSection from "@/components/FavoritesSection";
+import RecentGamesSection from "@/components/RecentGamesSection";
 
 export default function Profile() {
   const { data: session } = useSession();
@@ -232,6 +234,16 @@ export default function Profile() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Favorites Section */}
+        <div className="mt-8">
+          <FavoritesSection />
+        </div>
+
+        {/* Recent Games with Posters */}
+        <div className="mt-8">
+          <RecentGamesSection />
         </div>
 
         {/* Platform Connections */}
