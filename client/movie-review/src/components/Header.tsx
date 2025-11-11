@@ -68,13 +68,13 @@ export default function Header() {
     };
 
     return (
-        <header className="bg-white shadow-sm border-b border-gray-200">
+        <header className="glass-strong sticky top-0 z-50 backdrop-blur-lg">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo/Brand */}
                     <div className="flex items-center">
-                        <Link href="/" className="text-xl font-bold text-gray-900 hover:text-indigo-600 transition-colors">
-                            MovieReview
+                        <Link href="/" className="text-xl font-bold bg-gradient-to-r from-cyan-600 to-teal-500 bg-clip-text text-transparent hover:from-cyan-500 hover:to-teal-400 transition-all">
+                            Media Review
                         </Link>
                     </div>
 
@@ -102,45 +102,45 @@ export default function Header() {
                                     placeholder="Search movies, users..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                    className="block w-full pl-10 pr-3 py-2 border border-white/30 rounded-xl leading-5 glass placeholder-sky-700/60 text-sky-900 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 sm:text-sm transition-all"
                                 />
                             </div>
                             {/* Results dropdown */}
                             {showResults && (
-                                <div className="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-md shadow-lg">
+                                <div className="absolute z-50 mt-2 w-full glass-strong rounded-2xl shadow-xl">
                                     {isLoading ? (
-                                        <div className="p-4 text-sm text-gray-500">Searching...</div>
+                                        <div className="p-4 text-sm text-sky-700 font-medium">Searching...</div>
                                     ) : (
                                         <div className="max-h-80 overflow-auto">
                                             {/* Movies */}
                                             <div className="p-2">
-                                                <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">Movies</div>
+                                                <div className="px-2 py-1 text-xs font-semibold text-sky-600 uppercase">Movies</div>
                                                 {movies.length === 0 ? (
-                                                    <div className="px-2 py-2 text-sm text-gray-500">No movies found</div>
+                                                    <div className="px-2 py-2 text-sm text-sky-600">No movies found</div>
                                                 ) : (
                                                     movies.slice(0,5).map((m) => (
-                                                        <div key={m.id} className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-sm" onClick={() => setShowResults(false)}>
+                                                        <div key={m.id} className="px-2 py-2 hover:bg-white/20 cursor-pointer text-sm text-sky-800 rounded-lg transition-all" onClick={() => setShowResults(false)}>
                                                             {m.title}
                                                         </div>
                                                     ))
                                                 )}
                                             </div>
-                                            <hr />
+                                            <hr className="border-white/20" />
                                             {/* Users */}
                                             <div className="p-2">
-                                                <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">Users</div>
+                                                <div className="px-2 py-1 text-xs font-semibold text-sky-600 uppercase">Users</div>
                                                 {users.length === 0 ? (
-                                                    <div className="px-2 py-2 text-sm text-gray-500">No users found</div>
+                                                    <div className="px-2 py-2 text-sm text-sky-600">No users found</div>
                                                 ) : (
                                                     users.slice(0,5).map((u) => (
-                                                        <div key={u.id} className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-sm" onClick={() => setShowResults(false)}>
+                                                        <div key={u.id} className="px-2 py-2 hover:bg-white/20 cursor-pointer text-sm text-sky-800 rounded-lg transition-all" onClick={() => setShowResults(false)}>
                                                             {u.username}
                                                         </div>
                                                     ))
                                                 )}
                                             </div>
-                                            <div className="p-2 border-t">
-                                                <Link href={`/search?q=${encodeURIComponent(searchQuery)}`} className="block text-center text-sm text-indigo-600 hover:text-indigo-700" onClick={() => setShowResults(false)}>
+                                            <div className="p-2 border-t border-white/20">
+                                                <Link href={`/search?q=${encodeURIComponent(searchQuery)}`} className="block text-center text-sm text-cyan-600 hover:text-cyan-500 font-semibold transition-colors" onClick={() => setShowResults(false)}>
                                                     See all results
                                                 </Link>
                                             </div>
@@ -156,8 +156,20 @@ export default function Header() {
                         {session ? (
                             <div className="flex items-center space-x-4">
                                 <Link
+                                    href="/movies"
+                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
+                                >
+                                    Movies
+                                </Link>
+                                <Link
+                                    href="/games"
+                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
+                                >
+                                    Games
+                                </Link>
+                                <Link
                                     href="/dashboard"
-                                    className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-bold transition-colors"
+                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
                                 >
                                     Dashboard
                                 </Link>
@@ -165,14 +177,14 @@ export default function Header() {
                                     src={avatarOverride || session.user?.image || '/default.jpg'}
                                     alt="Profile"
                                     className="w-8 h-8 rounded-full cursor-pointer"
-                                    onClick={() => window.location.href = '/user/profile'}
+                                    onClick={() => window.location.href = '/dashboard'}
                                 />
                                 <button
                                     onClick={async () => {
                                         await signOut({ redirect: false });
                                         window.location.href = '/';
                                     }}
-                                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-sm font-bold transition-colors"
+                                    className="bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl glow-soft"
                                 >
                                     Sign Out
                                 </button>
@@ -180,14 +192,26 @@ export default function Header() {
                         ) : (
                             <>
                                 <Link
+                                    href="/movies"
+                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
+                                >
+                                    Movies
+                                </Link>
+                                <Link
+                                    href="/games"
+                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
+                                >
+                                    Games
+                                </Link>
+                                <Link
                                     href="/auth/signin"
-                                    className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-bold transition-colors"
+                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
                                 >
                                     Sign In
                                 </Link>
                                 <Link
                                     href="/auth/signup"
-                                    className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-bold transition-colors"
+                                    className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl glow-soft"
                                 >
                                     Sign Up
                                 </Link>
