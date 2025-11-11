@@ -37,19 +37,58 @@ export default function ProfilePage() {
   const recentReviews = [
     {
       id: 1,
-      movieTitle: 'Inception',
+      movieTitle: 'Gianmarco Soresi: Thief of Joy',
+      movieYear: '2025',
       movieImage: '/placeholder-movie.jpg',
-      rating: 2.5,
-      reviewText: 'An incredible mind-bending thriller that keeps you guessing until the very end. Christopher Nolan delivers another masterpiece.',
-      createdAt: '2 days ago',
+      rating: null,
+      reviewText: 'gianmarco 4ever',
+      watchedDate: '19 Oct 2025',
+      likes: 43,
+      isLiked: true,
     },
     {
       id: 2,
-      movieTitle: 'The Shawshank Redemption',
+      movieTitle: 'Sentimental Value',
+      movieYear: '2025',
       movieImage: '/placeholder-movie.jpg',
-      rating: 5.0,
-      reviewText: 'A timeless classic about hope, friendship, and redemption. Morgan Freeman and Tim Robbins deliver unforgettable performances.',
-      createdAt: '1 week ago',
+      rating: 3.5,
+      reviewText: 'the way this film plays with artifice is so stunning. i love movies joachim 4ever',
+      watchedDate: '30 Sep 2025',
+      likes: 94,
+      isLiked: false,
+    },
+    {
+      id: 3,
+      movieTitle: 'Twinless',
+      movieYear: '2025',
+      movieImage: '/placeholder-movie.jpg',
+      rating: 3.5,
+      reviewText: 'fun to watch with a crowd... the amount of groans during the foot scene delighted me',
+      watchedDate: '06 Sep 2025',
+      likes: 294,
+      isLiked: false,
+    },
+    {
+      id: 4,
+      movieTitle: 'Caught Stealing',
+      movieYear: '2025',
+      movieImage: '/placeholder-movie.jpg',
+      rating: 3.0,
+      reviewText: 'they tried to clone noho hank but there was a gas leak in the lab',
+      watchedDate: '30 Aug 2025',
+      likes: 699,
+      isLiked: false,
+    },
+    {
+      id: 5,
+      movieTitle: 'Lurker',
+      movieYear: '2025',
+      movieImage: '/placeholder-movie.jpg',
+      rating: 4.0,
+      reviewText: 'oliver should have a sleepover with us at his house in LA and i am literally in tears',
+      watchedDate: '29 Aug 2025',
+      likes: 156,
+      isLiked: true,
     },
   ];
 
@@ -300,7 +339,7 @@ export default function ProfilePage() {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Recent Rev.</h2>
                 <div className="space-y-6">
-                  {recentReviews.map((review) => (
+                  {recentReviews.slice(0, 2).map((review) => (
                     <div
                       key={review.id}
                       className="flex gap-4 p-4 border border-gray-200 rounded-lg hover:border-indigo-300 transition-colors"
@@ -312,10 +351,15 @@ export default function ProfilePage() {
 
                       {/* Review Content */}
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">{review.movieTitle}</h3>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                          {review.movieTitle}
+                          {review.movieYear && (
+                            <span className="text-gray-500 font-normal text-base ml-2">{review.movieYear}</span>
+                          )}
+                        </h3>
                         <div className="flex items-center gap-2 mb-3">
-                          {renderStars(review.rating)}
-                          <span className="text-gray-500 text-sm ml-2">{review.createdAt}</span>
+                          {review.rating && renderStars(review.rating)}
+                          <span className="text-gray-500 text-sm ml-2">{review.watchedDate}</span>
                         </div>
                         <p className="text-gray-600 leading-relaxed">{review.reviewText}</p>
                       </div>
@@ -498,9 +542,89 @@ export default function ProfilePage() {
         )}
 
         {activeTab === 'reviews' && (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Reviews Tab</h2>
-            <p className="text-gray-500 text-lg">Content coming soon...</p>
+          <div className="bg-white rounded-lg shadow-sm">
+            {/* Reviews Header */}
+            <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900 uppercase tracking-wide">Reviews</h2>
+              <div className="flex items-center gap-4">
+                <button className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                  RATING <span className="text-xs">▼</span>
+                </button>
+                <button className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                  DIARY YEAR <span className="text-xs">▼</span>
+                </button>
+                <button className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                  Sort by WHEN REVIEWED <span className="text-xs">▼</span>
+                </button>
+                <button className="text-sm text-gray-600 hover:text-gray-900">
+                  👁️
+                </button>
+              </div>
+            </div>
+
+            {/* Reviews List */}
+            <div className="divide-y divide-gray-200">
+              {recentReviews.map((review) => (
+                <div key={review.id} className="px-6 py-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex gap-6">
+                    {/* Movie Poster */}
+                    <div className="flex-shrink-0">
+                      <div className="w-28 h-40 bg-gray-300 rounded-lg overflow-hidden flex items-center justify-center">
+                        <span className="text-gray-500 text-sm">Poster</span>
+                      </div>
+                    </div>
+
+                    {/* Review Content */}
+                    <div className="flex-1">
+                      {/* Movie Title and Year */}
+                      <div className="mb-3">
+                        <h3 className="text-2xl font-bold text-gray-900 inline">
+                          {review.movieTitle}
+                        </h3>
+                        {review.movieYear && (
+                          <span className="text-xl text-gray-500 ml-2">{review.movieYear}</span>
+                        )}
+                      </div>
+
+                      {/* Watched Status and Rating */}
+                      <div className="flex items-center gap-3 mb-3">
+                        {review.isLiked && (
+                          <span className="text-orange-500 text-xl">🧡</span>
+                        )}
+                        <span className="text-gray-600">
+                          Watched <span className="text-gray-500">{review.watchedDate}</span>
+                        </span>
+                      </div>
+
+                      {/* Star Rating */}
+                      {review.rating && (
+                        <div className="flex items-center gap-1 mb-4">
+                          {renderStars(review.rating)}
+                        </div>
+                      )}
+
+                      {/* Review Text */}
+                      {review.reviewText && (
+                        <p className="text-gray-700 text-base leading-relaxed mb-4">
+                          {review.reviewText}
+                        </p>
+                      )}
+
+                      {/* Likes Count */}
+                      <div className="flex items-center gap-2 text-gray-500">
+                        <span className="text-gray-400">❤️</span>
+                        <span className="text-sm">{review.likes} likes</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* End of Reviews */}
+            <div className="px-6 py-8 text-center border-t border-gray-200">
+              <p className="text-gray-400 text-sm">End of reviews</p>
+            </div>
           </div>
         )}
 

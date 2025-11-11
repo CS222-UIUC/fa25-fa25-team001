@@ -177,7 +177,7 @@ export default function Header() {
                                     src={avatarOverride || session.user?.image || '/default.jpg'}
                                     alt="Profile"
                                     className="w-8 h-8 rounded-full cursor-pointer"
-                                    onClick={() => window.location.href = '/user/profile'}
+                                    onClick={() => window.location.href = '/dashboard'}
                                 />
                                 <button
                                     onClick={async () => {
