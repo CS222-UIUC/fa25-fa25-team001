@@ -2,6 +2,8 @@
 
 import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { searchGames, getCoverImageUrl } from '@/lib/api/igdb';
+import { searchMovies } from '@/lib/api/omdb';
 
 interface Movie {
   id: string;
@@ -9,6 +11,16 @@ interface Movie {
   year: number;
   rating?: number;
   poster?: string;
+  type?: string;
+}
+
+interface Game {
+  id: number;
+  name: string;
+  summary?: string;
+  rating?: number;
+  cover?: { image_id: string };
+  first_release_date?: number;
 }
 
 interface User {
@@ -17,43 +29,68 @@ interface User {
   profilePicture?: string;
 }
 
-// Stable mock data
-const mockMovies: Movie[] = [
-  { id: '1', title: 'The Dark Knight', year: 2008, rating: 9.0 },
-  { id: '2', title: 'Inception', year: 2010, rating: 8.8 },
-  { id: '3', title: 'Interstellar', year: 2014, rating: 8.6 },
-  { id: '4', title: 'The Matrix', year: 1999, rating: 8.7 },
-  { id: '5', title: 'Pulp Fiction', year: 1994, rating: 8.9 },
-];
-
-const mockUsers: User[] = [
-  { id: '1', username: 'moviebuff123', profilePicture: '/default.jpg' },
-  { id: '2', username: 'cinemafan', profilePicture: '/default.jpg' },
-  { id: '3', username: 'filmcritic', profilePicture: '/default.jpg' },
-];
-
 function SearchPageInner() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
 
   const [searchQuery, setSearchQuery] = useState(query);
   const [movies, setMovies] = useState<Movie[]>([]);
+  const [tvShows, setTvShows] = useState<Movie[]>([]);
+  const [games, setGames] = useState<Game[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'movies' | 'users'>('movies');
+  const [activeTab, setActiveTab] = useState<'games' | 'movies' | 'tv' | 'users'>('games');
 
   const performSearch = useCallback(async (searchTerm: string) => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const filteredMovies = mockMovies.filter(movie =>
-      movie.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    const filteredUsers = mockUsers.filter(user =>
-      user.username.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setMovies(filteredMovies);
-    setUsers(filteredUsers);
-    setLoading(false);
+    try {
+      // Search games using IGDB
+      const gamesResults = await searchGames(searchTerm, 24);
+      setGames(gamesResults);
+
+      // Search movies/TV shows using OMDB
+      try {
+        const omdbResults = await searchMovies(searchTerm, 1);
+        const allResults = omdbResults.Search || [];
+        
+        // Separate movies and TV shows
+        const moviesList: Movie[] = [];
+        const tvList: Movie[] = [];
+        
+        allResults.forEach((item) => {
+          const entry: Movie = {
+            id: item.imdbID,
+            title: item.Title,
+            year: parseInt(item.Year) || 0,
+            poster: item.Poster !== 'N/A' ? item.Poster : undefined,
+            type: item.Type,
+          };
+          
+          if (item.Type === 'movie') {
+            moviesList.push(entry);
+          } else if (item.Type === 'series') {
+            tvList.push(entry);
+          }
+        });
+        
+        setMovies(moviesList.slice(0, 24));
+        setTvShows(tvList.slice(0, 24));
+      } catch (omdbError) {
+        console.error('OMDB search error:', omdbError);
+        setMovies([]);
+        setTvShows([]);
+      }
+      
+      // Keep users empty for now (or implement user search separately)
+      setUsers([]);
+    } catch (error) {
+      console.error('Search error:', error);
+      setGames([]);
+      setMovies([]);
+      setTvShows([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -71,16 +108,16 @@ function SearchPageInner() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-sky-300 via-cyan-200 to-teal-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Search</h1>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent mb-4 drop-shadow-md">Search</h1>
           <form onSubmit={handleSearch} className="max-w-2xl">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg
-                  className="h-5 w-5 text-gray-400"
+                  className="h-5 w-5 text-sky-600"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
@@ -96,8 +133,8 @@ function SearchPageInner() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for movies, users..."
-                className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Search for games, movies, TV shows..."
+                className="block w-full pl-10 pr-4 py-3 glass-strong rounded-2xl text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 transition-all"
               />
             </div>
           </form>
@@ -107,24 +144,44 @@ function SearchPageInner() {
           <>
             {/* Tabs */}
             <div className="mb-6">
-              <div className="border-b border-gray-200">
+              <div className="border-b border-white/30">
                 <nav className="-mb-px flex space-x-8">
                   <button
+                    onClick={() => setActiveTab('games')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm transition-all ${
+                      activeTab === 'games'
+                        ? 'border-cyan-500 text-cyan-600'
+                        : 'border-transparent text-sky-700 hover:text-cyan-600 hover:border-cyan-300/50'
+                    }`}
+                  >
+                    Games ({games.length})
+                  </button>
+                  <button
                     onClick={() => setActiveTab('movies')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-2 px-1 border-b-2 font-medium text-sm transition-all ${
                       activeTab === 'movies'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-cyan-500 text-cyan-600'
+                        : 'border-transparent text-sky-700 hover:text-cyan-600 hover:border-cyan-300/50'
                     }`}
                   >
                     Movies ({movies.length})
                   </button>
                   <button
+                    onClick={() => setActiveTab('tv')}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm transition-all ${
+                      activeTab === 'tv'
+                        ? 'border-cyan-500 text-cyan-600'
+                        : 'border-transparent text-sky-700 hover:text-cyan-600 hover:border-cyan-300/50'
+                    }`}
+                  >
+                    TV Shows ({tvShows.length})
+                  </button>
+                  <button
                     onClick={() => setActiveTab('users')}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    className={`py-2 px-1 border-b-2 font-medium text-sm transition-all ${
                       activeTab === 'users'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-cyan-500 text-cyan-600'
+                        : 'border-transparent text-sky-700 hover:text-cyan-600 hover:border-cyan-300/50'
                     }`}
                   >
                     Users ({users.length})
@@ -135,25 +192,99 @@ function SearchPageInner() {
 
             {loading ? (
               <div className="text-center py-12">
-                <div className="text-xl text-gray-600">Searching...</div>
+                <div className="text-xl text-sky-700 font-medium">Searching...</div>
               </div>
             ) : (
               <>
-                {/* Movies Tab */}
-                {activeTab === 'movies' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {movies.map(movie => (
-                      <div key={movie.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                        <div className="aspect-[2/3] bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-500">Movie Poster</span>
+                {/* Games Tab */}
+                {activeTab === 'games' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {games.map(game => (
+                      <div key={game.id} className="glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105">
+                        <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
+                          {game.cover?.image_id ? (
+                            <img
+                              src={getCoverImageUrl(game.cover.image_id, 'cover_big')}
+                              alt={game.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sky-600 font-medium">No Cover</span>
+                          )}
                         </div>
                         <div className="p-4">
-                          <h3 className="font-semibold text-lg mb-2">{movie.title}</h3>
-                          <p className="text-gray-600 mb-2">{movie.year}</p>
+                          <h3 className="font-semibold text-lg mb-2 text-sky-800">{game.name}</h3>
+                          {game.first_release_date && (
+                            <p className="text-sky-600 mb-2 text-sm">
+                              {new Date(game.first_release_date * 1000).getFullYear()}
+                            </p>
+                          )}
+                          {game.rating && (
+                            <div className="flex items-center">
+                              <span className="text-amber-500">⭐</span>
+                              <span className="ml-1 text-sm font-medium text-sky-800">{(game.rating / 10).toFixed(1)}/10</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Movies Tab */}
+                {activeTab === 'movies' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {movies.map(movie => (
+                      <div key={movie.id} className="glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105">
+                        <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
+                          {movie.poster ? (
+                            <img
+                              src={movie.poster}
+                              alt={movie.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sky-600 font-medium">No Poster</span>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-semibold text-lg mb-2 text-sky-800">{movie.title}</h3>
+                          <p className="text-sky-600 mb-2 text-sm">{movie.year}</p>
                           {movie.rating && (
                             <div className="flex items-center">
-                              <span className="text-yellow-500">⭐</span>
-                              <span className="ml-1 text-sm font-medium">{movie.rating}/10</span>
+                              <span className="text-amber-500">⭐</span>
+                              <span className="ml-1 text-sm font-medium text-sky-800">{movie.rating}/10</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* TV Shows Tab */}
+                {activeTab === 'tv' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {tvShows.map(tv => (
+                      <div key={tv.id} className="glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105">
+                        <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
+                          {tv.poster ? (
+                            <img
+                              src={tv.poster}
+                              alt={tv.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sky-600 font-medium">No Poster</span>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-semibold text-lg mb-2 text-sky-800">{tv.title}</h3>
+                          <p className="text-sky-600 mb-2 text-sm">{tv.year}</p>
+                          {tv.rating && (
+                            <div className="flex items-center">
+                              <span className="text-amber-500">⭐</span>
+                              <span className="ml-1 text-sm font-medium text-sky-800">{tv.rating}/10</span>
                             </div>
                           )}
                         </div>
@@ -166,16 +297,16 @@ function SearchPageInner() {
                 {activeTab === 'users' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {users.map(user => (
-                      <div key={user.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                      <div key={user.id} className="glass-strong rounded-2xl p-6 hover:shadow-2xl transition-all transform hover:scale-105">
                         <div className="flex items-center space-x-4">
                           <img
                             src={user.profilePicture || '/default.jpg'}
                             alt={user.username}
-                            className="w-12 h-12 rounded-full"
+                            className="w-12 h-12 rounded-full ring-2 ring-cyan-300/50"
                           />
                           <div>
-                            <h3 className="font-semibold text-lg">{user.username}</h3>
-                            <p className="text-gray-600 text-sm">Movie Enthusiast</p>
+                            <h3 className="font-semibold text-lg text-sky-800">{user.username}</h3>
+                            <p className="text-sky-600 text-sm">Movie Enthusiast</p>
                           </div>
                         </div>
                       </div>
@@ -184,15 +315,27 @@ function SearchPageInner() {
                 )}
 
                 {/* No Results */}
+                {!loading && activeTab === 'games' && games.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-sky-700 text-lg font-medium">No games found for "{query}"</p>
+                  </div>
+                )}
+
                 {!loading && activeTab === 'movies' && movies.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-gray-500 text-lg">No movies found for "{query}"</p>
+                    <p className="text-sky-700 text-lg font-medium">No movies found for "{query}"</p>
+                  </div>
+                )}
+
+                {!loading && activeTab === 'tv' && tvShows.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-sky-700 text-lg font-medium">No TV shows found for "{query}"</p>
                   </div>
                 )}
 
                 {!loading && activeTab === 'users' && users.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-gray-500 text-lg">No users found for "{query}"</p>
+                    <p className="text-sky-700 text-lg font-medium">No users found for "{query}"</p>
                   </div>
                 )}
               </>
@@ -202,7 +345,7 @@ function SearchPageInner() {
 
         {!query && (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">Enter a search term to find movies and users</p>
+            <p className="text-sky-700 text-lg font-medium">Enter a search term to find games, movies, and TV shows</p>
           </div>
         )}
       </div>
