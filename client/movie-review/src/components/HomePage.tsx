@@ -1,8 +1,35 @@
 "use client";
 
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function HomePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  // Temporarily disabled to prevent redirect loops
+  // TODO: Re-enable with proper session handling
+  /*
+  useEffect(() => {
+    // Only redirect if we're certain the user is authenticated
+    // and avoid redirect loops
+    if (status === 'authenticated' && session?.user && !window.location.pathname.includes('/profile')) {
+      router.push('/profile');
+    }
+  }, [session, status, router]);
+  */
+
+  // Show loading state while checking authentication
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       {/* Hero Section - Left Aligned */}

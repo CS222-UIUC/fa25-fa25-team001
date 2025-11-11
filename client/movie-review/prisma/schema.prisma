@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -15,86 +9,77 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  username      String   @unique
-  password      String
-  email         String   @unique
-  profilePicture String @default("/default.jpg")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Media consumption tracking
-  moviesWatched     MovieWatched[]
-  videoGamesPlayed  VideoGamePlayed[]
-  tvShowsWatched    TvShowWatched[]
-
-  // User-generated content
-  lists             List[]
-  reviews           Review[]
-
-  // Social features
-  friends           UserFriend[] @relation("UserFriends")
-  friendOf          UserFriend[] @relation("FriendOf")
-
-  // Ratings
-  movieRatings      MovieRating[]
-  videoGameRatings  VideoGameRating[]
-  tvShowRatings     TvShowRating[]
+  id                   String                 @id @default(cuid())
+  username             String                 @unique
+  password             String
+  email                String                 @unique
+  bio                  String?
+  profilePicture       String                 @default("/default.jpg")
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  favoriteGames        Json?
+  favoriteMovies       Json?
+  favoriteTvShows      Json?
+  lists                List[]
+  movieRatings         MovieRating[]
+  moviesWatched        MovieWatched[]
+  platform_connections platform_connections[]
+  reviews              Review[]
+  tvShowRatings        TvShowRating[]
+  tvShowsWatched       TvShowWatched[]
+  friendOf             UserFriend[]           @relation("FriendOf")
+  friends              UserFriend[]           @relation("UserFriends")
+  videoGameRatings     VideoGameRating[]
+  videoGamesPlayed     VideoGamePlayed[]
 
   @@map("users")
 }
 
 model Movie {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   title       String
   releaseYear Int?
   genre       String?
   director    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relationships
-  watchedBy   MovieWatched[]
-  reviews     Review[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
   listItems   ListItem[]
   ratings     MovieRating[]
+  watchedBy   MovieWatched[]
+  reviews     Review[]
 
   @@map("movies")
 }
 
 model VideoGame {
-  id          String   @id @default(cuid())
+  id          String            @id @default(cuid())
   title       String
   releaseYear Int?
   genre       String?
   developer   String?
   platform    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relationships
-  playedBy    VideoGamePlayed[]
-  reviews     Review[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
   listItems   ListItem[]
+  reviews     Review[]
   ratings     VideoGameRating[]
+  playedBy    VideoGamePlayed[]
 
   @@map("video_games")
 }
 
 model TvShow {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   title       String
   releaseYear Int?
   genre       String?
   creator     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relationships
-  watchedBy   TvShowWatched[]
-  reviews     Review[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   listItems   ListItem[]
+  reviews     Review[]
   ratings     TvShowRating[]
+  watchedBy   TvShowWatched[]
 
   @@map("tv_shows")
 }
@@ -104,26 +89,24 @@ model MovieWatched {
   userId    String
   movieId   String
   watchedAt DateTime @default(now())
-  rating    Int?     // 1-10 rating
+  rating    Int?
   notes     String?
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, movieId])
   @@map("movies_watched")
 }
 
 model VideoGamePlayed {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
   gameId    String
-  playedAt  DateTime @default(now())
-  rating    Int?     // 1-10 rating
+  playedAt  DateTime  @default(now())
+  rating    Int?
   notes     String?
-
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   videoGame VideoGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, gameId])
   @@map("video_games_played")
@@ -134,72 +117,62 @@ model TvShowWatched {
   userId    String
   showId    String
   watchedAt DateTime @default(now())
-  rating    Int?     // 1-10 rating
+  rating    Int?
   notes     String?
-
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tvShow    TvShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+  tvShow    TvShow   @relation(fields: [showId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, showId])
   @@map("tv_shows_watched")
 }
 
 model List {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   title       String
   description String?
-  category    String?  // e.g., "Top 10 Movies with Best Soundtracks"
-  isPublic    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  category    String?
+  isPublic    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
   userId      String
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   items       ListItem[]
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("lists")
 }
 
 model ListItem {
-  id        String   @id @default(cuid())
-  position  Int      // Position in the list (1, 2, 3, etc.)
-  notes     String?
-  createdAt DateTime @default(now())
-
-  listId    String
-  list      List @relation(fields: [listId], references: [id], onDelete: Cascade)
-
-  // Polymorphic relationship - can reference different media types
+  id          String     @id @default(cuid())
+  position    Int
+  notes       String?
+  createdAt   DateTime   @default(now())
+  listId      String
   movieId     String?
   videoGameId String?
   tvShowId    String?
-
-  movie     Movie?     @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  videoGame VideoGame? @relation(fields: [videoGameId], references: [id], onDelete: Cascade)
-  tvShow    TvShow?    @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+  list        List       @relation(fields: [listId], references: [id], onDelete: Cascade)
+  movie       Movie?     @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  tvShow      TvShow?    @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+  videoGame   VideoGame? @relation(fields: [videoGameId], references: [id], onDelete: Cascade)
 
   @@map("list_items")
 }
 
 model Review {
-  id        String   @id @default(cuid())
-  title     String?
-  content   String
-  rating    Int      // 1-10 rating
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  userId    String
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Polymorphic relationship - can review different media types
+  id          String     @id @default(cuid())
+  title       String?
+  content     String
+  rating      Int
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  userId      String
   movieId     String?
   videoGameId String?
   tvShowId    String?
-
-  movie     Movie?     @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  videoGame VideoGame? @relation(fields: [videoGameId], references: [id], onDelete: Cascade)
-  tvShow    TvShow?    @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+  movie       Movie?     @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  tvShow      TvShow?    @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoGame   VideoGame? @relation(fields: [videoGameId], references: [id], onDelete: Cascade)
 
   @@map("reviews")
 }
@@ -207,12 +180,10 @@ model Review {
 model UserFriend {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-
   userId    String
   friendId  String
-
-  user      User @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
-  friend    User @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+  friend    User     @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+  user      User     @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, friendId])
   @@map("user_friends")
@@ -220,31 +191,27 @@ model UserFriend {
 
 model MovieRating {
   id        String   @id @default(cuid())
-  rating    Float    // 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0
+  rating    Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   userId    String
   movieId   String
-
-  user      User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  movie     Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, movieId])
   @@map("movie_ratings")
 }
 
 model VideoGameRating {
-  id        String   @id @default(cuid())
-  rating    Float    // 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id        String    @id @default(cuid())
+  rating    Float
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   userId    String
   gameId    String
-
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   videoGame VideoGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, gameId])
   @@map("video_game_ratings")
@@ -252,16 +219,31 @@ model VideoGameRating {
 
 model TvShowRating {
   id        String   @id @default(cuid())
-  rating    Float    // 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0
+  rating    Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   userId    String
   showId    String
-
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tvShow    TvShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+  tvShow    TvShow   @relation(fields: [showId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, showId])
   @@map("tv_show_ratings")
+}
+
+model platform_connections {
+  id             String    @id
+  platformType   String
+  platformUserId String?
+  accessToken    String?
+  refreshToken   String?
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime
+  userId         String
+  lastSyncedAt   DateTime?
+  gamesData      Json?
+  users          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, platformType])
 }

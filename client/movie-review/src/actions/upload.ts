@@ -10,9 +10,9 @@ export async function uploadProfilePicture(file: File) {
   if (!session?.user?.id) return { error: 'Unauthorized' } as const;
   if (!file) return { error: 'No file received' } as const;
 
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
-  if (!allowedTypes.includes(file.type)) return { error: 'File must be JPG, PNG, or SVG' } as const;
-  if (file.size > 1 * 1024 * 1024) return { error: 'File size must be less than 1MB' } as const;
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+  if (!allowedTypes.includes(file.type)) return { error: 'File must be JPG, PNG, GIF, WebP, or SVG' } as const;
+  if (file.size > 500 * 1024) return { error: 'File size must be less than 500KB' } as const;
 
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);

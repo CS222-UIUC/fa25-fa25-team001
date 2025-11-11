@@ -15,6 +15,7 @@ export async function getUserProfile() {
       id: true,
       username: true,
       email: true,
+      bio: true,
       profilePicture: true,
       createdAt: true,
       _count: {
@@ -27,7 +28,7 @@ export async function getUserProfile() {
   return { success: true, user } as const;
 }
 
-export async function updateUserProfile(data: { username?: string; email?: string; profilePicture?: string }) {
+export async function updateUserProfile(data: { username?: string; email?: string; bio?: string; profilePicture?: string }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: 'Unauthorized' } as const;
 
@@ -45,9 +46,10 @@ export async function updateUserProfile(data: { username?: string; email?: strin
     data: {
       ...(data.username && { username: data.username }),
       ...(data.email && { email: data.email }),
+      ...(data.bio !== undefined && { bio: data.bio }),
       ...(data.profilePicture && { profilePicture: data.profilePicture }),
     },
-    select: { id: true, username: true, email: true, profilePicture: true },
+    select: { id: true, username: true, email: true, bio: true, profilePicture: true },
   });
 
   return { success: true, user: updated } as const;

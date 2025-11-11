@@ -1,17 +1,18 @@
-'use client';
+"use client";
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { searchEverything } from '@/actions/search';
 
 export default function Header() {
+    const { data: session, status } = useSession();
     const [searchQuery, setSearchQuery] = useState('');
-    const { data: session } = useSession();
     const [showResults, setShowResults] = useState(false);
-    const [avatarOverride, setAvatarOverride] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
-    const [movies, setMovies] = useState<Array<{id: string; title: string}>>([]);
+    const [movies, setMovies] = useState<Array<{id: string; title: string; year?: number; source?: string}>>([]);
+    const [tvShows, setTVShows] = useState<Array<{id: string; title: string; year?: string}>>([]);
+    const [games, setGames] = useState<Array<{id: number; name: string}>>([]);
     const [users, setUsers] = useState<Array<{id: string; username: string}>>([]);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -26,23 +27,14 @@ export default function Header() {
         return () => document.removeEventListener('click', onClick);
     }, []);
 
-    // Listen for profile updates to refresh avatar immediately
-    useEffect(() => {
-        const handler = (e: Event) => {
-            const ce = e as CustomEvent<{ image?: string }>;
-            if (ce.detail?.image) {
-                // Cache-bust
-                setAvatarOverride(`${ce.detail.image}?t=${Date.now()}`);
-            }
-        };
-        window.addEventListener('profileUpdated', handler as EventListener);
-        return () => window.removeEventListener('profileUpdated', handler as EventListener);
-    }, []);
+
 
     // Debounced search
     useEffect(() => {
         if (!searchQuery || searchQuery.trim().length < 2) {
             setMovies([]);
+            setTVShows([]);
+            setGames([]);
             setUsers([]);
             return;
         }
@@ -50,8 +42,25 @@ export default function Header() {
         const t = setTimeout(async () => {
             try {
                 const data = await searchEverything(searchQuery.trim());
-                setMovies((data as any).movies || []);
-                setUsers((data as any).users || []);
+                
+                // Filter duplicates by ID
+                const uniqueMovies = ((data as any).movies || []).filter((movie: any, index: number, self: any[]) => 
+                    self.findIndex(m => m.id === movie.id) === index
+                );
+                const uniqueTVShows = ((data as any).tvShows || []).filter((show: any, index: number, self: any[]) => 
+                    self.findIndex(s => s.id === show.id) === index
+                );
+                const uniqueGames = ((data as any).games || []).filter((game: any, index: number, self: any[]) => 
+                    self.findIndex(g => g.id === game.id) === index
+                );
+                const uniqueUsers = ((data as any).users || []).filter((user: any, index: number, self: any[]) => 
+                    self.findIndex(u => u.id === user.id) === index
+                );
+                
+                setMovies(uniqueMovies);
+                setTVShows(uniqueTVShows);
+                setGames(uniqueGames);
+                setUsers(uniqueUsers);
                 setShowResults(true);
             } catch {}
             setIsLoading(false);
@@ -72,7 +81,7 @@ export default function Header() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo/Brand */}
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-6">
                         <Link href="/" className="text-xl font-bold text-gray-900 hover:text-indigo-600 transition-colors">
                             MovieReview
                         </Link>
@@ -112,15 +121,43 @@ export default function Header() {
                                         <div className="p-4 text-sm text-gray-500">Searching...</div>
                                     ) : (
                                         <div className="max-h-80 overflow-auto">
+                                            {/* Games */}
+                                            <div className="p-2">
+                                                <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">Games</div>
+                                                {games.length === 0 ? (
+                                                    <div className="px-2 py-2 text-sm text-gray-500">No games found</div>
+                                                ) : (
+                                                    games.slice(0,3).map((g) => (
+                                                        <div key={g.id} className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-sm" onClick={() => setShowResults(false)}>
+                                                            🎮 {g.name}
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                            <hr />
                                             {/* Movies */}
                                             <div className="p-2">
                                                 <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">Movies</div>
                                                 {movies.length === 0 ? (
                                                     <div className="px-2 py-2 text-sm text-gray-500">No movies found</div>
                                                 ) : (
-                                                    movies.slice(0,5).map((m) => (
-                                                        <div key={m.id} className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-sm" onClick={() => setShowResults(false)}>
-                                                            {m.title}
+                                                    movies.slice(0,3).map((m, index) => (
+                                                        <div key={`movie-${m.id || index}`} className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-sm" onClick={() => setShowResults(false)}>
+                                                            🎬 {m.title} {m.year && `(${m.year})`}
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                            <hr />
+                                            {/* TV Shows */}
+                                            <div className="p-2">
+                                                <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase">TV Shows</div>
+                                                {tvShows.length === 0 ? (
+                                                    <div className="px-2 py-2 text-sm text-gray-500">No TV shows found</div>
+                                                ) : (
+                                                    tvShows.slice(0,3).map((s) => (
+                                                        <div key={s.id} className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-sm" onClick={() => setShowResults(false)}>
+                                                            📺 {s.title} {s.year && `(${s.year})`}
                                                         </div>
                                                     ))
                                                 )}
@@ -132,9 +169,9 @@ export default function Header() {
                                                 {users.length === 0 ? (
                                                     <div className="px-2 py-2 text-sm text-gray-500">No users found</div>
                                                 ) : (
-                                                    users.slice(0,5).map((u) => (
+                                                    users.slice(0,3).map((u) => (
                                                         <div key={u.id} className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-sm" onClick={() => setShowResults(false)}>
-                                                            {u.username}
+                                                            👤 {u.username}
                                                         </div>
                                                     ))
                                                 )}
@@ -156,16 +193,16 @@ export default function Header() {
                         {session ? (
                             <div className="flex items-center space-x-4">
                                 <Link
-                                    href="/dashboard"
+                                    href="/profile"
                                     className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-bold transition-colors"
                                 >
-                                    Dashboard
+                                    {session.user?.name || 'Profile'}
                                 </Link>
                                 <img
-                                    src={avatarOverride || session.user?.image || '/default.jpg'}
+                                    src={session.user?.image || '/default.jpg'}
                                     alt="Profile"
                                     className="w-8 h-8 rounded-full cursor-pointer"
-                                    onClick={() => window.location.href = '/user/profile'}
+                                    onClick={() => window.location.href = '/profile'}
                                 />
                                 <button
                                     onClick={async () => {

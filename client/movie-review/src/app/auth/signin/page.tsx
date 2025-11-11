@@ -25,9 +25,10 @@ export default function SignIn() {
       })
 
       if (result?.error) {
-        setError('Invalid email or password')
-      } else {
-        router.push('/dashboard')
+        setError('Invalid email or password');
+      } else if (result?.ok) {
+        // Successful login, redirect to profile
+        router.push('/profile');
       }
     } catch (error) {
       setError('An error occurred. Please try again.')
