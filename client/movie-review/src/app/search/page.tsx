@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { searchGames, getCoverImageUrl } from '@/lib/api/igdb';
 import { searchMovies } from '@/lib/api/omdb';
+import Header from '@/components/Header';
 
 interface Movie {
   id: string;
@@ -40,6 +41,25 @@ function SearchPageInner() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'games' | 'movies' | 'tv' | 'users'>('games');
+  const MIN_YEAR = 0;
+  const MAX_YEAR = new Date().getFullYear();
+  const [minYear, setMinYear] = useState<string>('');
+  const [maxYear, setMaxYear] = useState<string>('');
+  const [minRating, setMinRating] = useState<string>('');
+  const [maxRating, setMaxRating] = useState<string>('');
+  const [filtersApplied, setFiltersApplied] = useState(false);
+
+  // Normalize/filter values
+  const parseYear = (val: string): number | undefined => {
+    if (val.trim() === '') return undefined;
+    const y = parseInt(val);
+    if (isNaN(y)) return undefined;
+    return Math.min(MAX_YEAR, y);
+  };
+  const minYearVal = parseYear(minYear);
+  const maxYearVal = parseYear(maxYear);
+  const minRatingVal = minRating !== '' ? Math.max(0, Math.min(10, parseFloat(minRating))) : undefined;
+  const maxRatingVal = maxRating !== '' ? Math.max(0, Math.min(10, parseFloat(maxRating))) : undefined;
 
   const performSearch = useCallback(async (searchTerm: string) => {
     setLoading(true);
@@ -107,8 +127,26 @@ function SearchPageInner() {
     }
   };
 
+  const handleApplyFilters = () => {
+    // Build URL with filters (and query if present)
+    const params = new URLSearchParams();
+    if (searchQuery.trim()) params.set('q', searchQuery.trim());
+    if (minYearVal !== undefined) params.set('yearMin', String(minYearVal));
+    if (maxYearVal !== undefined) params.set('yearMax', String(maxYearVal));
+    if (minRating !== '') params.set('minRating', String(minRatingVal ?? ''));
+    if (maxRating !== '') params.set('maxRating', String(maxRatingVal ?? ''));
+    const qs = params.toString();
+    window.history.pushState({}, '', `/search${qs ? `?${qs}` : ''}`);
+    setFiltersApplied(true);
+    // Only fetch from APIs if a query exists; filters are applied client-side
+    if (searchQuery.trim()) {
+      performSearch(searchQuery.trim());
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-300 via-cyan-200 to-teal-300">
+      <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search Header */}
         <div className="mb-8">
@@ -138,9 +176,84 @@ function SearchPageInner() {
               />
             </div>
           </form>
+
+          {/* Filters */}
+          <div className="mt-4 glass rounded-2xl p-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-sky-700 mb-1">Release Date Range</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={MIN_YEAR}
+                    max={MAX_YEAR}
+                    value={minYear}
+                    onChange={(e) => setMinYear(e.target.value)}
+                    placeholder="min. year"
+                    className="w-full glass-strong rounded-xl px-3 py-2 text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300"
+                  />
+                  <span className="text-sky-700">-</span>
+                  <input
+                    type="number"
+                    min={MIN_YEAR}
+                    max={MAX_YEAR}
+                    value={maxYear}
+                    onChange={(e) => setMaxYear(e.target.value)}
+                    placeholder="max. year"
+                    className="w-full glass-strong rounded-xl px-3 py-2 text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-sky-700 mb-1">Rating Range</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    max={10}
+                    value={minRating}
+                    onChange={(e) => setMinRating(e.target.value)}
+                    placeholder="0"
+                    className="w-full glass-strong rounded-xl px-3 py-2 text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300"
+                  />
+                  <span className="text-sky-700">-</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min={0}
+                    max={10}
+                    value={maxRating}
+                    onChange={(e) => setMaxRating(e.target.value)}
+                    placeholder="10"
+                    className="w-full glass-strong rounded-xl px-3 py-2 text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-sky-700 mb-1">&nbsp;</label>
+                <div className="flex items-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleApplyFilters}
+                  className="w-full bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold px-4 py-2 rounded-xl transition-all shadow-md hover:shadow-lg"
+                >
+                  Apply Filters
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setMinYear(''); setMaxYear(''); setMinRating(''); setMaxRating(''); setFiltersApplied(false); }}
+                  className="w-full bg-white/70 hover:bg-white text-sky-800 font-semibold px-4 py-2 rounded-xl transition-all"
+                >
+                  Clear filters
+                </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {query && (
+        {(query || filtersApplied) && (
           <>
             {/* Tabs */}
             <div className="mb-6">
@@ -154,7 +267,18 @@ function SearchPageInner() {
                         : 'border-transparent text-sky-700 hover:text-cyan-600 hover:border-cyan-300/50'
                     }`}
                   >
-                    Games ({games.length})
+                    {(() => {
+                      const filtered = games.filter(g => {
+                        const year = g.first_release_date ? new Date(g.first_release_date * 1000).getFullYear() : undefined;
+                        const rating10 = typeof g.rating === 'number' ? g.rating / 10 : undefined;
+                        if (minYearVal && (year === undefined || year < minYearVal)) return false;
+                        if (maxYearVal && (year === undefined || year > maxYearVal)) return false;
+                        if (minRatingVal !== undefined && (rating10 === undefined || rating10 < minRatingVal)) return false;
+                        if (maxRatingVal !== undefined && (rating10 === undefined || rating10 > maxRatingVal)) return false;
+                        return true;
+                      });
+                      return `Games (${filtered.length})`;
+                    })()}
                   </button>
                   <button
                     onClick={() => setActiveTab('movies')}
@@ -164,7 +288,18 @@ function SearchPageInner() {
                         : 'border-transparent text-sky-700 hover:text-cyan-600 hover:border-cyan-300/50'
                     }`}
                   >
-                    Movies ({movies.length})
+                    {(() => {
+                      const filtered = movies.filter(m => {
+                        const year = m.year || undefined;
+                        const rating10 = typeof m.rating === 'number' ? m.rating : undefined;
+                        if (minYearVal && (year === undefined || year < minYearVal)) return false;
+                        if (maxYearVal && (year === undefined || year > maxYearVal)) return false;
+                        if (minRatingVal !== undefined && (rating10 === undefined || rating10 < minRatingVal)) return false;
+                        if (maxRatingVal !== undefined && (rating10 === undefined || rating10 > maxRatingVal)) return false;
+                        return true;
+                      });
+                      return `Movies (${filtered.length})`;
+                    })()}
                   </button>
                   <button
                     onClick={() => setActiveTab('tv')}
@@ -174,7 +309,18 @@ function SearchPageInner() {
                         : 'border-transparent text-sky-700 hover:text-cyan-600 hover:border-cyan-300/50'
                     }`}
                   >
-                    TV Shows ({tvShows.length})
+                    {(() => {
+                      const filtered = tvShows.filter(t => {
+                        const year = t.year || undefined;
+                        const rating10 = typeof t.rating === 'number' ? t.rating : undefined;
+                        if (minYearVal && (year === undefined || year < minYearVal)) return false;
+                        if (maxYearVal && (year === undefined || year > maxYearVal)) return false;
+                        if (minRatingVal !== undefined && (rating10 === undefined || rating10 < minRatingVal)) return false;
+                        if (maxRatingVal !== undefined && (rating10 === undefined || rating10 > maxRatingVal)) return false;
+                        return true;
+                      });
+                      return `TV Shows (${filtered.length})`;
+                    })()}
                   </button>
                   <button
                     onClick={() => setActiveTab('users')}
@@ -199,7 +345,17 @@ function SearchPageInner() {
                 {/* Games Tab */}
                 {activeTab === 'games' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {games.map(game => (
+                    {games
+                      .filter(game => {
+                        const year = game.first_release_date ? new Date(game.first_release_date * 1000).getFullYear() : undefined;
+                        const rating10 = typeof game.rating === 'number' ? game.rating / 10 : undefined;
+                        if (minYearVal && (year === undefined || year < minYearVal)) return false;
+                        if (maxYearVal && (year === undefined || year > maxYearVal)) return false;
+                        if (minRatingVal !== undefined && (rating10 === undefined || rating10 < minRatingVal)) return false;
+                        if (maxRatingVal !== undefined && (rating10 === undefined || rating10 > maxRatingVal)) return false;
+                        return true;
+                      })
+                      .map(game => (
                       <div key={game.id} className="glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105">
                         <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
                           {game.cover?.image_id ? (
@@ -234,7 +390,17 @@ function SearchPageInner() {
                 {/* Movies Tab */}
                 {activeTab === 'movies' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {movies.map(movie => (
+                    {movies
+                      .filter(movie => {
+                        const year = movie.year || undefined;
+                        const rating10 = typeof movie.rating === 'number' ? movie.rating : undefined;
+                        if (minYearVal && (year === undefined || year < minYearVal)) return false;
+                        if (maxYearVal && (year === undefined || year > maxYearVal)) return false;
+                        if (minRatingVal !== undefined && (rating10 === undefined || rating10 < minRatingVal)) return false;
+                        if (maxRatingVal !== undefined && (rating10 === undefined || rating10 > maxRatingVal)) return false;
+                        return true;
+                      })
+                      .map(movie => (
                       <div key={movie.id} className="glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105">
                         <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
                           {movie.poster ? (
@@ -265,7 +431,17 @@ function SearchPageInner() {
                 {/* TV Shows Tab */}
                 {activeTab === 'tv' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {tvShows.map(tv => (
+                    {tvShows
+                      .filter(tv => {
+                        const year = tv.year || undefined;
+                        const rating10 = typeof tv.rating === 'number' ? tv.rating : undefined;
+                        if (minYearVal && (year === undefined || year < minYearVal)) return false;
+                        if (maxYearVal && (year === undefined || year > maxYearVal)) return false;
+                        if (minRatingVal !== undefined && (rating10 === undefined || rating10 < minRatingVal)) return false;
+                        if (maxRatingVal !== undefined && (rating10 === undefined || rating10 > maxRatingVal)) return false;
+                        return true;
+                      })
+                      .map(tv => (
                       <div key={tv.id} className="glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105">
                         <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 flex items-center justify-center overflow-hidden rounded-t-2xl">
                           {tv.poster ? (
@@ -315,19 +491,43 @@ function SearchPageInner() {
                 )}
 
                 {/* No Results */}
-                {!loading && activeTab === 'games' && games.length === 0 && (
+                {!loading && activeTab === 'games' && games.filter(g => {
+                  const year = g.first_release_date ? new Date(g.first_release_date * 1000).getFullYear() : undefined;
+                  const rating10 = typeof g.rating === 'number' ? g.rating / 10 : undefined;
+                  if (minYearVal && (year === undefined || year < minYearVal)) return false;
+                  if (maxYearVal && (year === undefined || year > maxYearVal)) return false;
+                  if (minRatingVal !== undefined && (rating10 === undefined || rating10 < minRatingVal)) return false;
+                  if (maxRatingVal !== undefined && (rating10 === undefined || rating10 > maxRatingVal)) return false;
+                  return true;
+                }).length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-sky-700 text-lg font-medium">No games found for "{query}"</p>
                   </div>
                 )}
 
-                {!loading && activeTab === 'movies' && movies.length === 0 && (
+                {!loading && activeTab === 'movies' && movies.filter(m => {
+                  const year = m.year || undefined;
+                  const rating10 = typeof m.rating === 'number' ? m.rating : undefined;
+                  if (minYearVal && (year === undefined || year < minYearVal)) return false;
+                  if (maxYearVal && (year === undefined || year > maxYearVal)) return false;
+                  if (minRatingVal !== undefined && (rating10 === undefined || rating10 < minRatingVal)) return false;
+                  if (maxRatingVal !== undefined && (rating10 === undefined || rating10 > maxRatingVal)) return false;
+                  return true;
+                }).length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-sky-700 text-lg font-medium">No movies found for "{query}"</p>
                   </div>
                 )}
 
-                {!loading && activeTab === 'tv' && tvShows.length === 0 && (
+                {!loading && activeTab === 'tv' && tvShows.filter(t => {
+                  const year = t.year || undefined;
+                  const rating10 = typeof t.rating === 'number' ? t.rating : undefined;
+                  if (minYearVal && (year === undefined || year < minYearVal)) return false;
+                  if (maxYearVal && (year === undefined || year > maxYearVal)) return false;
+                  if (minRatingVal !== undefined && (rating10 === undefined || rating10 < minRatingVal)) return false;
+                  if (maxRatingVal !== undefined && (rating10 === undefined || rating10 > maxRatingVal)) return false;
+                  return true;
+                }).length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-sky-700 text-lg font-medium">No TV shows found for "{query}"</p>
                   </div>

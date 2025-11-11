@@ -12,6 +12,8 @@ export default function Header() {
     const [avatarOverride, setAvatarOverride] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(false);
     const [movies, setMovies] = useState<Array<{id: string; title: string}>>([]);
+    const [games, setGames] = useState<Array<{id: string; title: string}>>([]);
+    const [tvShows, setTvShows] = useState<Array<{id: string; title: string}>>([]);
     const [users, setUsers] = useState<Array<{id: string; username: string}>>([]);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -44,6 +46,8 @@ export default function Header() {
         if (!searchQuery || searchQuery.trim().length < 2) {
             setMovies([]);
             setUsers([]);
+            setGames([]);
+            setTvShows([]);
             return;
         }
         setIsLoading(true);
@@ -52,6 +56,8 @@ export default function Header() {
                 const data = await searchEverything(searchQuery.trim());
                 setMovies((data as any).movies || []);
                 setUsers((data as any).users || []);
+                setGames((data as any).games || []);
+                setTvShows((data as any).tvShows || []);
                 setShowResults(true);
             } catch {}
             setIsLoading(false);
@@ -79,12 +85,16 @@ export default function Header() {
                     </div>
 
                     {/* Search Bar */}
-                    <div className="flex-1 max-w-lg mx-8" ref={containerRef}>
+                    <div className="flex-1 max-w-lg mx-8 " ref={containerRef}>
                         <form onSubmit={handleSearch} className="relative">
                             <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Link
+                                    href={`/search${searchQuery.trim() ? `?q=${encodeURIComponent(searchQuery.trim())}` : ''}`}
+                                    aria-label="Go to search"
+                                    className="absolute inset-y-0 left-0 pl-3 flex items-center"
+                                >
                                     <svg
-                                        className="h-5 w-5 text-gray-400"
+                                        className="h-5 w-5 text-gray-400 hover:text-sky-500 transition-colors"
                                         xmlns="http://www.w3.org/2000/svg"
                                         viewBox="0 0 20 20"
                                         fill="currentColor"
@@ -96,10 +106,10 @@ export default function Header() {
                                             clipRule="evenodd"
                                         />
                                     </svg>
-                                </div>
+                                </Link>
                                 <input
                                     type="text"
-                                    placeholder="Search movies, users..."
+                                    placeholder="Search media, users..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="block w-full pl-10 pr-3 py-2 border border-white/30 rounded-xl leading-5 glass placeholder-sky-700/60 text-sky-900 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 sm:text-sm transition-all"
@@ -107,7 +117,7 @@ export default function Header() {
                             </div>
                             {/* Results dropdown */}
                             {showResults && (
-                                <div className="absolute z-50 mt-2 w-full glass-strong rounded-2xl shadow-xl">
+                                <div className="absolute z-50 mt-2 w-full rounded-2xl shadow-xl bg-white/95">
                                     {isLoading ? (
                                         <div className="p-4 text-sm text-sky-700 font-medium">Searching...</div>
                                     ) : (
@@ -119,8 +129,34 @@ export default function Header() {
                                                     <div className="px-2 py-2 text-sm text-sky-600">No movies found</div>
                                                 ) : (
                                                     movies.slice(0,5).map((m) => (
-                                                        <div key={m.id} className="px-2 py-2 hover:bg-white/20 cursor-pointer text-sm text-sky-800 rounded-lg transition-all" onClick={() => setShowResults(false)}>
+                                                        <div key={m.id} className="px-2 py-2 hover:bg-sky-600/10 cursor-pointer text-sm text-sky-800 rounded-lg transition-all" onClick={() => setShowResults(false)}>
                                                             {m.title}
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                            {/* Games */}
+                                            <div className="p-2">
+                                                <div className="px-2 py-1 text-xs font-semibold text-sky-600 uppercase">Games</div>
+                                                {games.length === 0 ? (
+                                                    <div className="px-2 py-2 text-sm text-sky-600">No games found</div>
+                                                ) : (
+                                                    games.slice(0,5).map((g) => (
+                                                        <div key={g.id} className="px-2 py-2 hover:bg-sky-600/10 cursor-pointer text-sm text-sky-800 rounded-lg transition-all" onClick={() => setShowResults(false)}>
+                                                            {g.title}
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                            {/* TV Shows */}
+                                            <div className="p-2">
+                                                <div className="px-2 py-1 text-xs font-semibold text-sky-600 uppercase">TV Shows</div>
+                                                {tvShows.length === 0 ? (
+                                                    <div className="px-2 py-2 text-sm text-sky-600">No TV shows found</div>
+                                                ) : (
+                                                    tvShows.slice(0,5).map((t) => (
+                                                        <div key={t.id} className="px-2 py-2 hover:bg-sky-600/10 cursor-pointer text-sm text-sky-800 rounded-lg transition-all" onClick={() => setShowResults(false)}>
+                                                            {t.title}
                                                         </div>
                                                     ))
                                                 )}
@@ -133,7 +169,7 @@ export default function Header() {
                                                     <div className="px-2 py-2 text-sm text-sky-600">No users found</div>
                                                 ) : (
                                                     users.slice(0,5).map((u) => (
-                                                        <div key={u.id} className="px-2 py-2 hover:bg-white/20 cursor-pointer text-sm text-sky-800 rounded-lg transition-all" onClick={() => setShowResults(false)}>
+                                                        <div key={u.id} className="px-2 py-2 hover:bg-sky-600/10 cursor-pointer text-sm text-sky-800 rounded-lg transition-all" onClick={() => setShowResults(false)}>
                                                             {u.username}
                                                         </div>
                                                     ))
