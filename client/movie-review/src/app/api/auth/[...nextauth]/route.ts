@@ -1,3 +1,29 @@
+/**
+ * ============================================================================
+ * ROUTE: NextAuth Authentication Handler
+ * ============================================================================
+ * 
+ * Endpoint: GET/POST /api/auth/[...nextauth]
+ * Purpose: NextAuth.js authentication handler for user sign-in/sign-out
+ * 
+ * Authentication: Handles authentication, not requires it
+ * 
+ * Features:
+ * - Credentials-based authentication (email/password)
+ * - JWT session strategy
+ * - Custom sign-in page at /auth/signin
+ * - Stores user ID and profile picture in session
+ * 
+ * This is a catch-all route that handles all NextAuth endpoints:
+ * - /api/auth/signin
+ * - /api/auth/signout
+ * - /api/auth/session
+ * - /api/auth/csrf
+ * - etc.
+ * 
+ * ============================================================================
+ */
+
 import NextAuth, { NextAuthOptions } from "next-auth"
 import { DefaultSession } from "next-auth"
 import type { User } from "next-auth"
@@ -18,6 +44,7 @@ declare module "next-auth" {
 }
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || "development-secret-key-change-in-production",
   session: {
     strategy: "jwt",
   },

@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getUserProfile, updateUserProfile } from "@/actions/user";
 import { uploadProfilePicture } from "@/actions/upload";
+import PlatformConnections from "@/components/PlatformConnections";
+import FavoritesSection from "@/components/FavoritesSection";
+import RecentGamesSection from "@/components/RecentGamesSection";
 
 export default function Profile() {
   const { data: session } = useSession();
@@ -35,10 +38,10 @@ export default function Profile() {
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Please sign in to view your profile</h1>
-          <Link href="/auth/signin" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-300 via-cyan-200 to-teal-300">
+        <div className="text-center glass-strong rounded-3xl p-8 shadow-2xl">
+          <h1 className="text-2xl font-bold mb-4 bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent">Please sign in to view your profile</h1>
+          <Link href="/auth/signin" className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold py-2 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl glow-soft inline-block">
             Sign In
           </Link>
         </div>
@@ -113,21 +116,21 @@ export default function Profile() {
   };
 
   return (
-    <div className="text-black min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-sky-300 via-cyan-200 to-teal-300">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Your Profile</h1>
-          <p className="text-gray-600 mt-2">Manage your account settings and preferences</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent drop-shadow-md">Your Profile</h1>
+          <p className="text-sky-700 mt-2 font-medium">Manage your account settings and preferences</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="glass-strong rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold">Profile Information</h2>
+            <h2 className="text-2xl font-semibold text-sky-800">Profile Information</h2>
             <div className="space-x-2">
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                  className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold py-2 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl glow-soft"
                 >
                   Edit Profile
                 </button>
@@ -136,13 +139,13 @@ export default function Profile() {
                   <button
                     onClick={handleSave}
                     disabled={uploading}
-                    className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50"
+                    className="bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-white font-semibold py-2 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl glow-soft disabled:opacity-50"
                   >
                     {uploading ? 'Saving...' : 'Save Changes'}
                   </button>
                   <button
                     onClick={() => setIsEditing(false)}
-                    className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+                    className="bg-gradient-to-r from-slate-400 to-gray-500 hover:from-slate-300 hover:to-gray-400 text-white font-semibold py-2 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl"
                   >
                     Cancel
                   </button>
@@ -158,7 +161,7 @@ export default function Profile() {
                 <img
                   src={profileData.image || '/default.jpg'}
                   alt="Profile"
-                  className="w-24 h-24 rounded-full"
+                  className="w-24 h-24 rounded-full ring-4 ring-cyan-300/50 shadow-lg"
                 />
                 {isEditing && (
                   <div className="mt-4">
@@ -166,14 +169,14 @@ export default function Profile() {
                       type="file"
                       accept=".jpg,.jpeg,.png,.svg"
                       onChange={handleFileSelect}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      className="block w-full text-sm text-sky-700 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gradient-to-r file:from-cyan-400 file:to-teal-400 file:text-white hover:file:from-cyan-300 hover:file:to-teal-300 transition-all"
                     />
-                    <p className="text-xs text-gray-500 mt-1">JPG, PNG, or SVG. Max 1MB.</p>
+                    <p className="text-xs text-sky-600 mt-1 font-medium">JPG, PNG, or SVG. Max 1MB.</p>
                     {selectedFile && (
                       <button
                         onClick={handleUpload}
                         disabled={uploading}
-                        className="mt-2 bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-sm disabled:opacity-50"
+                        className="mt-2 bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-white font-semibold py-1 px-3 rounded-xl text-sm disabled:opacity-50 transition-all shadow-lg hover:shadow-xl glow-soft"
                       >
                         {uploading ? 'Uploading...' : 'Upload'}
                       </button>
@@ -183,14 +186,14 @@ export default function Profile() {
               </div>
               {isEditing && (
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-sky-700 mb-2 font-semibold">
                     Or enter Profile Picture URL
                   </label>
                   <input
                     type="url"
                     value={profileData.image.startsWith('blob:') ? '' : profileData.image}
                     onChange={(e) => setProfileData({...profileData, image: e.target.value})}
-                    className="border border-gray-300 rounded-md px-3 py-2 w-full max-w-md"
+                    className="glass-strong rounded-xl px-3 py-2 w-full max-w-md text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all"
                     placeholder="https://example.com/image.jpg"
                   />
                 </div>
@@ -199,7 +202,7 @@ export default function Profile() {
 
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-sky-700 mb-2 font-semibold">
                 Username
               </label>
               {isEditing ? (
@@ -207,16 +210,16 @@ export default function Profile() {
                   type="text"
                   value={profileData.name}
                   onChange={(e) => setProfileData({...profileData, name: e.target.value})}
-                  className="border border-gray-300 rounded-md px-3 py-2 w-full max-w-md"
+                  className="glass-strong rounded-xl px-3 py-2 w-full max-w-md text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all"
                 />
               ) : (
-                <p className="text-gray-900">{profileData.name}</p>
+                <p className="text-sky-800 font-medium">{profileData.name}</p>
               )}
             </div>
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-sky-700 mb-2 font-semibold">
                 Email
               </label>
               {isEditing ? (
@@ -224,13 +227,28 @@ export default function Profile() {
                   type="email"
                   value={profileData.email}
                   onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                  className="border border-gray-300 rounded-md px-3 py-2 w-full max-w-md"
+                  className="glass-strong rounded-xl px-3 py-2 w-full max-w-md text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 transition-all"
                 />
               ) : (
-                <p className="text-gray-900">{profileData.email}</p>
+                <p className="text-sky-800 font-medium">{profileData.email}</p>
               )}
             </div>
           </div>
+        </div>
+
+        {/* Favorites Section */}
+        <div className="mt-8">
+          <FavoritesSection />
+        </div>
+
+        {/* Recent Games with Posters */}
+        <div className="mt-8">
+          <RecentGamesSection />
+        </div>
+
+        {/* Platform Connections */}
+        <div className="mt-8">
+          <PlatformConnections />
         </div>
       </div>
     </div>
