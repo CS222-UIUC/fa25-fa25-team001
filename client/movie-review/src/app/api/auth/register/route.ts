@@ -1,3 +1,24 @@
+/**
+ * ============================================================================
+ * ROUTE: User Registration API
+ * ============================================================================
+ * 
+ * Endpoint: POST /api/auth/register
+ * Purpose: Register a new user account
+ * 
+ * Authentication: Not required (public endpoint)
+ * 
+ * Request Body: { email: string, username: string, password: string }
+ * 
+ * Returns: { message: string, user: {...} }
+ * 
+ * Validation:
+ * - Email, username, and password are required
+ * - Password must be at least 6 characters
+ * 
+ * ============================================================================
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { register_user } from '../[...nextauth]/server_actions';
 
