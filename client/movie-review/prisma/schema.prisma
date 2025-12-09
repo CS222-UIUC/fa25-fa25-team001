@@ -41,6 +41,7 @@ model Movie {
   releaseYear Int?
   genre       String?
   director    String?
+  poster      String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   listItems   ListItem[]
@@ -58,6 +59,7 @@ model VideoGame {
   genre       String?
   developer   String?
   platform    String?
+  cover       String?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   listItems   ListItem[]
@@ -74,6 +76,7 @@ model TvShow {
   releaseYear Int?
   genre       String?
   creator     String?
+  poster      String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   listItems   ListItem[]

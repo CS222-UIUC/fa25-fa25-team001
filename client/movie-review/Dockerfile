@@ -14,8 +14,7 @@ RUN npm install --force
 COPY . .
 
 # Create environment file for build
-# get this from me securely
-
+#get thsi file from me 
 # Generate Prisma client
 RUN npx prisma generate
 

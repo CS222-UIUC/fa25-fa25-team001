@@ -8,6 +8,7 @@ import HomeTab from './components/HomeTab';
 import ConnectionsTab from './components/ConnectionsTab';
 import ReviewsTab from './components/ReviewsTab';
 import FriendsTab from './components/FriendsTab';
+import WatchlistTab from './components/WatchlistTab';
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
@@ -299,10 +300,10 @@ export default function ProfilePage() {
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow-sm mb-6">
           <div className="border-b border-gray-200">
-            <nav className="flex">
+            <nav className="flex overflow-x-auto">
               <button
                 onClick={() => setActiveTab('home')}
-                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors ${
+                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'home'
                     ? 'border-indigo-600 text-indigo-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -312,7 +313,7 @@ export default function ProfilePage() {
               </button>
               <button
                 onClick={() => setActiveTab('reviews')}
-                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors ${
+                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'reviews'
                     ? 'border-indigo-600 text-indigo-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -321,8 +322,18 @@ export default function ProfilePage() {
                 reviews
               </button>
               <button
+                onClick={() => setActiveTab('watchlist')}
+                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'watchlist'
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                watchlist
+              </button>
+              <button
                 onClick={() => setActiveTab('friends')}
-                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors ${
+                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'friends'
                     ? 'border-indigo-600 text-indigo-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -332,7 +343,7 @@ export default function ProfilePage() {
               </button>
               <button
                 onClick={() => setActiveTab('connections')}
-                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors ${
+                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'connections'
                     ? 'border-indigo-600 text-indigo-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -346,7 +357,13 @@ export default function ProfilePage() {
 
         {/* Content Grid - Home Tab */}
         {activeTab === 'home' && (
-          <HomeTab user={user} />
+          <HomeTab user={{
+            id: session?.user?.id || '',
+            username: user.username,
+            bio: user.bio,
+            profilePicture: user.profilePicture,
+            followersCount: user.followersCount
+          }} />
         )}
 
         {activeTab === 'reviews' && (
@@ -354,6 +371,13 @@ export default function ProfilePage() {
             id: session?.user?.id || '',
             username: user.username,
             profilePicture: user.profilePicture
+          }} />
+        )}
+
+        {activeTab === 'watchlist' && (
+          <WatchlistTab user={{
+            id: session?.user?.id || '',
+            username: user.username
           }} />
         )}
 

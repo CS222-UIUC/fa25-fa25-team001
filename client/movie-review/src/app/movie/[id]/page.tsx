@@ -33,9 +33,15 @@ export default function MovieDetailPage() {
   useEffect(() => {
     if (movieId) {
       loadMovieDetails();
-      loadReviews();
     }
   }, [movieId]);
+
+  // Load reviews after movie is loaded
+  useEffect(() => {
+    if (movie) {
+      loadReviews();
+    }
+  }, [movie]);
 
   const loadMovieDetails = async () => {
     // Extract source and actual ID
@@ -74,10 +80,30 @@ export default function MovieDetailPage() {
       const isLocal = movieId.startsWith('local-');
       const actualId = isLocal ? movieId.replace('local-', '') : movieId.replace('omdb-', '');
       
-      const response = await fetch(`/api/reviews/list?movieId=${actualId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setReviews(data.reviews || []);
+      if (isLocal) {
+        // For local movies, just use the ID
+        const response = await fetch(`/api/reviews/list?movieId=${actualId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setReviews(data.reviews || []);
+        }
+      } else {
+        // For OMDB movies, find the local movie entry by title
+        const movieTitle = movie?.title || movie?.Title;
+        if (movieTitle) {
+          const findResponse = await fetch(`/api/movies/find?title=${encodeURIComponent(movieTitle)}`);
+          if (findResponse.ok) {
+            const findData = await findResponse.json();
+            if (findData.movie) {
+              // Found local movie, load its reviews
+              const reviewsResponse = await fetch(`/api/reviews/list?movieId=${findData.movie.id}`);
+              if (reviewsResponse.ok) {
+                const reviewsData = await reviewsResponse.json();
+                setReviews(reviewsData.reviews || []);
+              }
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to load reviews:', error);

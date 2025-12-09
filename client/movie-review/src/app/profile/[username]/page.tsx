@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Header from '@/components/Header';
+import HomeTab from '../components/HomeTab';
+import ReviewsTab from '../components/ReviewsTab';
+import FriendsTab from '../components/FriendsTab';
+import WatchlistTab from '../components/WatchlistTab';
 
 interface UserProfile {
   id: string;
@@ -24,6 +28,7 @@ export default function UserProfilePage() {
   const [loading, setLoading] = useState(true);
   const [friendsCount, setFriendsCount] = useState(0);
   const [reviewsCount, setReviewsCount] = useState(0);
+  const [activeTab, setActiveTab] = useState('home');
 
   useEffect(() => {
     if (username) {
@@ -141,8 +146,9 @@ export default function UserProfilePage() {
       <Header />
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Profile Header */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-6 border border-gray-100">
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex items-start gap-6">
+            {/* Profile Picture */}
             <div className="flex-shrink-0">
               <div className="w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden shadow-lg">
                 {user.profilePicture && user.profilePicture !== '/default.jpg' ? (
@@ -157,86 +163,131 @@ export default function UserProfilePage() {
               </div>
             </div>
 
+            {/* User Info */}
             <div className="flex-1">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h1 className="text-4xl font-bold text-gray-900 mb-2">{user.username}</h1>
-                  {user.bio && (
-                    <p className="text-gray-600 text-lg">{user.bio}</p>
-                  )}
-                </div>
+              <div className="flex items-center gap-4 mb-2">
+                <h1 className="text-4xl font-bold text-gray-900">{user.username}</h1>
                 {!isOwnProfile && session?.user?.id && (
-                  <div className="flex gap-3">
-                    {isFriend ? (
-                      <button
-                        onClick={handleRemoveFriend}
-                        className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-                      >
-                        Remove Friend
-                      </button>
-                    ) : (
-                      <button
-                        onClick={handleAddFriend}
-                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-                      >
-                        Add Friend
-                      </button>
-                    )}
-                  </div>
+                  isFriend ? (
+                    <button
+                      onClick={handleRemoveFriend}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                    >
+                      Remove Friend
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleAddFriend}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                    >
+                      Add Friend
+                    </button>
+                  )
                 )}
                 {isOwnProfile && (
                   <button
                     onClick={() => router.push('/profile')}
-                    className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50"
                   >
                     Edit Profile
                   </button>
                 )}
               </div>
 
-              <div className="flex gap-8 text-gray-600">
-                <div>
-                  <span className="font-bold text-gray-900">{friendsCount}</span> Friends
-                </div>
-                <div>
-                  <span className="font-bold text-gray-900">{reviewsCount}</span> Reviews
-                </div>
-                <div>
-                  <span className="text-sm text-gray-500">
-                    Joined {new Date(user.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
+              <div className="flex gap-6 text-gray-600 mb-4">
+                <span>
+                  <strong className="text-gray-900">{friendsCount}</strong> Friends
+                </span>
+                <span>
+                  <strong className="text-gray-900">{reviewsCount}</strong> Reviews
+                </span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-xl shadow-lg mb-6 border border-gray-100">
+        <div className="bg-white rounded-lg shadow-sm mb-6">
           <div className="border-b border-gray-200">
-            <nav className="flex">
+            <nav className="flex overflow-x-auto">
               <button
-                onClick={() => router.push(`/profile/${username}?tab=reviews`)}
-                className="px-6 py-4 font-semibold text-lg border-b-2 border-indigo-600 text-indigo-600"
+                onClick={() => setActiveTab('home')}
+                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'home'
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
               >
-                Reviews
+                home
               </button>
               <button
-                onClick={() => router.push(`/profile/${username}?tab=friends`)}
-                className="px-6 py-4 font-semibold text-lg border-b-2 border-transparent text-gray-500 hover:text-gray-700"
+                onClick={() => setActiveTab('reviews')}
+                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'reviews'
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
               >
-                Friends
+                reviews
+              </button>
+              <button
+                onClick={() => setActiveTab('watchlist')}
+                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'watchlist'
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                watchlist
+              </button>
+              <button
+                onClick={() => setActiveTab('friends')}
+                className={`px-6 py-4 font-semibold text-lg border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'friends'
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                friends
               </button>
             </nav>
           </div>
         </div>
 
-        {/* Content will be loaded via tabs */}
-        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-          <p className="text-gray-600 text-center py-8">
-            Profile content will be displayed here based on selected tab.
-          </p>
-        </div>
+        {/* Tab Content */}
+        {activeTab === 'home' && (
+          <HomeTab user={{
+            id: user.id,
+            username: user.username,
+            bio: user.bio,
+            profilePicture: user.profilePicture,
+            followersCount: 0
+          }} />
+        )}
+
+        {activeTab === 'reviews' && (
+          <ReviewsTab user={{
+            id: user.id,
+            username: user.username,
+            profilePicture: user.profilePicture
+          }} />
+        )}
+
+        {activeTab === 'watchlist' && (
+          <WatchlistTab user={{
+            id: user.id,
+            username: user.username
+          }} />
+        )}
+
+        {activeTab === 'friends' && (
+          <FriendsTab user={{
+            id: user.id,
+            username: user.username,
+            profilePicture: user.profilePicture,
+            followersCount: 0
+          }} />
+        )}
       </div>
     </div>
   );

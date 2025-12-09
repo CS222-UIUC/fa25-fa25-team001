@@ -70,9 +70,9 @@ export default function Header() {
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        // Keep user on current page, just open results dropdown
+        // Navigate to search page when Enter is pressed
         if (searchQuery.trim()) {
-            setShowResults(true);
+            window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
         }
     };
 

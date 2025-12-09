@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       title: item.movie?.title || item.tvShow?.title || item.videoGame?.title || 'Unknown',
       mediaType: item.movie ? 'movie' : item.tvShow ? 'tvshow' : 'game',
       year: item.movie?.releaseYear?.toString() || item.tvShow?.releaseYear?.toString() || item.videoGame?.releaseYear?.toString(),
-      poster: null, // We don't store posters in our schema yet
+      poster: item.movie?.poster || item.tvShow?.poster || item.videoGame?.cover || null,
       source: 'Database',
       externalId: item.movie?.id || item.tvShow?.id || item.videoGame?.id || '',
       addedAt: item.createdAt,
@@ -126,37 +126,58 @@ export async function POST(request: NextRequest) {
     let movieId = null, tvShowId = null, gameId = null;
 
     if (mediaType === 'movie') {
-      let movie = await prisma.movie.findUnique({ where: { id: mediaId } });
+      // Check if movie already exists by title first
+      let movie = await prisma.movie.findFirst({
+        where: {
+          title: { equals: title, mode: 'insensitive' },
+          ...(year && { releaseYear: parseInt(year.toString()) }),
+        },
+      });
       if (!movie) {
         movie = await prisma.movie.create({
           data: {
-            id: mediaId,
+            id: mediaId, // Use OMDB ID as database ID
             title: title,
-            releaseYear: year ? parseInt(year.toString()) : null
+            releaseYear: year ? parseInt(year.toString()) : null,
+            poster: poster && poster !== 'N/A' ? poster : null
           }
         });
       }
       movieId = movie.id;
     } else if (mediaType === 'tvshow') {
-      let tvShow = await prisma.tvShow.findUnique({ where: { id: mediaId } });
+      // Check if TV show already exists by title first
+      let tvShow = await prisma.tvShow.findFirst({
+        where: {
+          title: { equals: title, mode: 'insensitive' },
+          ...(year && { releaseYear: parseInt(year.toString()) }),
+        },
+      });
       if (!tvShow) {
         tvShow = await prisma.tvShow.create({
           data: {
-            id: mediaId,
+            id: mediaId, // Use OMDB ID as database ID
             title: title,
-            releaseYear: year ? parseInt(year.toString()) : null
+            releaseYear: year ? parseInt(year.toString()) : null,
+            poster: poster && poster !== 'N/A' ? poster : null
           }
         });
       }
       tvShowId = tvShow.id;
     } else if (mediaType === 'game') {
-      let game = await prisma.videoGame.findUnique({ where: { id: mediaId } });
+      // Check if game already exists by title first
+      let game = await prisma.videoGame.findFirst({
+        where: {
+          title: { equals: title, mode: 'insensitive' },
+          ...(year && { releaseYear: parseInt(year.toString()) }),
+        },
+      });
       if (!game) {
         game = await prisma.videoGame.create({
           data: {
-            id: mediaId,
+            id: mediaId, // Use RAWG ID as database ID
             title: title,
-            releaseYear: year ? parseInt(year.toString()) : null
+            releaseYear: year ? parseInt(year.toString()) : null,
+            cover: poster || null
           }
         });
       }

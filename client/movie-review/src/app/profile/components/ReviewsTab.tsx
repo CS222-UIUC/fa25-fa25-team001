@@ -25,9 +25,9 @@ interface Review {
     username: string;
     profilePicture: string;
   };
-  movie?: { id: string; title: string };
-  videoGame?: { id: string; title: string };
-  tvShow?: { id: string; title: string };
+  movie?: { id: string; title: string; poster?: string };
+  videoGame?: { id: string; title: string; cover?: string };
+  tvShow?: { id: string; title: string; poster?: string };
 }
 
 export default function ReviewsTab({ user }: ReviewsTabProps) {
@@ -189,62 +189,76 @@ export default function ReviewsTab({ user }: ReviewsTabProps) {
           </div>
         ) : (
           <div className="space-y-6">
-            {reviews.map((review) => (
-              <div
-                key={review.id}
-                className="border border-gray-200 rounded-lg p-6 hover:border-indigo-300 transition-colors bg-white"
-              >
-                <div className="flex gap-6">
-                  {/* Media Info */}
-                  <div className="flex-shrink-0">
-                    <div className="w-24 h-36 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-sm text-center px-2">
-                      {getMediaTitle(review)}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2 text-center capitalize">
-                      {getMediaType(review)}
-                    </p>
-                  </div>
-
-                  {/* Review Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
-                          {review.title || getMediaTitle(review)}
-                        </h3>
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="flex items-center">
-                            {renderStars(review.rating)}
+            {reviews.map((review) => {
+              const posterUrl = review.movie?.poster || review.tvShow?.poster || review.videoGame?.cover;
+              
+              return (
+                <div
+                  key={review.id}
+                  className="border border-gray-200 rounded-lg p-6 hover:border-indigo-300 transition-colors bg-white"
+                >
+                  <div className="flex gap-6">
+                    {/* Media Info */}
+                    <div className="flex-shrink-0">
+                      <div className="w-24 h-36 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg overflow-hidden">
+                        {posterUrl ? (
+                          <img 
+                            src={posterUrl} 
+                            alt={getMediaTitle(review)} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-indigo-600 font-bold text-sm text-center px-2">
+                            {getMediaTitle(review)}
                           </div>
-                          <span className="text-gray-500 text-sm">{formatDate(review.createdAt)}</span>
-                        </div>
+                        )}
                       </div>
-                      {isOwnProfile && (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleDeleteReview(review.id)}
-                            className="text-red-600 hover:text-red-700 text-sm"
-                            title="Delete review"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      )}
+                      <p className="text-xs text-gray-500 mt-2 text-center capitalize">
+                        {getMediaType(review)}
+                      </p>
                     </div>
 
-                    <p className="text-gray-700 leading-relaxed mb-4 whitespace-pre-wrap">
-                      {review.content}
-                    </p>
+                    {/* Review Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-900 mb-2">
+                            {review.title || getMediaTitle(review)}
+                          </h3>
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="flex items-center">
+                              {renderStars(review.rating)}
+                            </div>
+                            <span className="text-gray-500 text-sm">{formatDate(review.createdAt)}</span>
+                          </div>
+                        </div>
+                        {isOwnProfile && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleDeleteReview(review.id)}
+                              className="text-red-600 hover:text-red-700 text-sm"
+                              title="Delete review"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span className="capitalize">{getMediaType(review)}</span>
-                      <span>•</span>
-                      <span>{review.rating}/5 stars</span>
+                      <p className="text-gray-700 leading-relaxed mb-4 whitespace-pre-wrap">
+                        {review.content}
+                      </p>
+
+                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <span className="capitalize">{getMediaType(review)}</span>
+                        <span>•</span>
+                        <span>{review.rating}/5 stars</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

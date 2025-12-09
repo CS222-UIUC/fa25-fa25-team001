@@ -35,18 +35,21 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             title: true,
+            poster: true,
           },
         },
         videoGame: {
           select: {
             id: true,
             title: true,
+            cover: true,
           },
         },
         tvShow: {
           select: {
             id: true,
             title: true,
+            poster: true,
           },
         },
       },

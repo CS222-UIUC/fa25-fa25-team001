@@ -10,6 +10,16 @@ jest.mock('next/link', () => ({
   ),
 }))
 
+// Mock next-auth
+jest.mock('next-auth/react', () => ({
+  useSession: () => ({ data: null, status: 'unauthenticated' }),
+}))
+
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), pathname: '/', query: {}, asPath: '/' }),
+}))
+
 describe('HomePage', () => {
   it('renders the main heading', () => {
     render(<HomePage />)
