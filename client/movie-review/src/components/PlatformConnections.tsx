@@ -69,8 +69,7 @@ export default function PlatformConnections() {
     if (steamConnected === 'true') {
       loadConnections();
       alert('Steam account connected successfully!');
-      // Clean up URL
-      router.replace('/user/profile', { scroll: false });
+      router.replace('/dashboard?tab=profile', { scroll: false });
     } else if (error) {
       const errorMessages: Record<string, string> = {
         'steam_auth_failed': 'Steam authentication failed. Please try again.',
@@ -81,7 +80,7 @@ export default function PlatformConnections() {
         'connection_failed': 'Failed to connect Steam account.',
       };
       alert(errorMessages[error] || `Error: ${error}`);
-      router.replace('/user/profile', { scroll: false });
+      router.replace('/dashboard?tab=profile', { scroll: false });
     }
   }, [searchParams, router]);
 

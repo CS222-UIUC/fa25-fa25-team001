@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     cookieStore.delete('steam_openid_state');
 
     if (!nonce || !state) {
-      return NextResponse.redirect(new URL('/user/profile?error=steam_auth_expired', request.url));
+      return NextResponse.redirect(new URL('/dashboard?tab=profile&error=steam_auth_expired', request.url));
     }
 
     // Extract OpenID parameters from query string
@@ -53,18 +53,18 @@ export async function GET(request: NextRequest) {
 
     // Check if user cancelled
     if (mode === 'cancel') {
-      return NextResponse.redirect(new URL('/user/profile?error=steam_auth_cancelled', request.url));
+      return NextResponse.redirect(new URL('/dashboard?tab=profile&error=steam_auth_cancelled', request.url));
     }
 
     // Extract Steam ID from claimed_id
     // Format: https://steamcommunity.com/openid/id/76561198000000000
     if (!claimedId) {
-      return NextResponse.redirect(new URL('/user/profile?error=steam_auth_failed', request.url));
+      return NextResponse.redirect(new URL('/dashboard?tab=profile&error=steam_auth_failed', request.url));
     }
 
     const steamIdMatch = claimedId.match(/\/id\/(\d{17})$/);
     if (!steamIdMatch || !steamIdMatch[1]) {
-      return NextResponse.redirect(new URL('/user/profile?error=steam_id_invalid', request.url));
+      return NextResponse.redirect(new URL('/dashboard?tab=profile&error=steam_id_invalid', request.url));
     }
 
     const steamId = steamIdMatch[1];
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
       // Steam returns "ns:http://specs.openid.net/auth/2.0\nis_valid:true\n"
       if (!verifyText.includes('is_valid:true')) {
         console.error('Steam OpenID verification failed:', verifyText);
-        return NextResponse.redirect(new URL('/user/profile?error=steam_auth_failed', request.url));
+        return NextResponse.redirect(new URL('/dashboard?tab=profile&error=steam_auth_failed', request.url));
       }
     } catch (error) {
       console.error('Error verifying Steam OpenID response:', error);
@@ -106,14 +106,14 @@ export async function GET(request: NextRequest) {
     });
 
     if (!result.success) {
-      return NextResponse.redirect(new URL(`/user/profile?error=${encodeURIComponent(result.error || 'connection_failed')}`, request.url));
+      return NextResponse.redirect(new URL(`/dashboard?tab=profile&error=${encodeURIComponent(result.error || 'connection_failed')}`, request.url));
     }
 
     // Redirect back to platform connections page with success
-    return NextResponse.redirect(new URL('/user/profile?steam_connected=true', request.url));
+    return NextResponse.redirect(new URL('/dashboard?tab=profile&steam_connected=true', request.url));
   } catch (error) {
     console.error('Error handling Steam OpenID callback:', error);
-    return NextResponse.redirect(new URL('/user/profile?error=steam_auth_error', request.url));
+    return NextResponse.redirect(new URL('/dashboard?tab=profile&error=steam_auth_error', request.url));
   }
 }
 

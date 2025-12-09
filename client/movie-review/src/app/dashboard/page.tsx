@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import PlatformConnections from '@/components/PlatformConnections';
+import FavoritesSection from '@/components/FavoritesSection';
+import RecentGamesSection from '@/components/RecentGamesSection';
 
 export default function Dashboard() {
   const { data: session } = useSession();
@@ -22,9 +25,8 @@ export default function Dashboard() {
     router.push(`/dashboard?tab=${tab}`, { scroll: false });
   };
 
-  // Mock data - will be replaced with real data later
   const user = {
-    username: session?.user?.name || 'basil',
+    username: session?.user?.name || 'User',
     profilePicture: session?.user?.image || '/default.jpg',
     tweetsCount: 217,
     followersCount: 217,
@@ -470,6 +472,21 @@ export default function Dashboard() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Favorites Section */}
+              <div className="mt-6">
+                <FavoritesSection />
+              </div>
+
+              {/* Recent Games Section */}
+              <div className="mt-6">
+                <RecentGamesSection />
+              </div>
+
+              {/* Platform Connections */}
+              <div className="mt-6">
+                <PlatformConnections />
               </div>
             </div>
           </div>

@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(steamOpenIdUrl.toString());
   } catch (error) {
     console.error('Error initiating Steam OpenID:', error);
-    return NextResponse.redirect(new URL('/user/profile?error=steam_auth_failed', request.url));
+    return NextResponse.redirect(new URL('/dashboard?tab=profile&error=steam_auth_failed', request.url));
   }
 }
 
