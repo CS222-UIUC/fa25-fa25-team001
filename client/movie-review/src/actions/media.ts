@@ -112,3 +112,62 @@ export async function removeFromWatchlist(itemId: string) {
   await prisma.listItem.delete({ where: { id: itemId } });
   return { success: true } as const;
 }
+
+// Trending Reviews
+export async function getTrendingMovieReviews(limit: number = 5) {
+  const reviews = await prisma.review.findMany({
+    where: { movieId: { not: null } },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    select: {
+      id: true,
+      content: true,
+      rating: true,
+      createdAt: true,
+      title: true,
+      movie: { select: { title: true } },
+      user: { select: { username: true } },
+    },
+  });
+
+  return {
+    reviews: reviews.map(r => ({
+      id: r.id,
+      mediaTitle: r.movie?.title || 'Untitled',
+      rating: r.rating,
+      content: r.content,
+      title: r.title,
+      username: r.user.username,
+      date: r.createdAt.toISOString().split('T')[0],
+    })),
+  } as const;
+}
+
+export async function getTrendingGameReviews(limit: number = 5) {
+  const reviews = await prisma.review.findMany({
+    where: { videoGameId: { not: null } },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    select: {
+      id: true,
+      content: true,
+      rating: true,
+      createdAt: true,
+      title: true,
+      videoGame: { select: { title: true } },
+      user: { select: { username: true } },
+    },
+  });
+
+  return {
+    reviews: reviews.map(r => ({
+      id: r.id,
+      mediaTitle: r.videoGame?.title || 'Untitled',
+      rating: r.rating,
+      content: r.content,
+      title: r.title,
+      username: r.user.username,
+      date: r.createdAt.toISOString().split('T')[0],
+    })),
+  } as const;
+}

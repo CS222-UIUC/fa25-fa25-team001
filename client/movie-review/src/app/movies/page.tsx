@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import { getTrendingMovieReviews } from '@/actions/media';
 
 interface Movie {
   Title: string;
@@ -48,6 +49,15 @@ export default function MoviesPage() {
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('year-newest');
+  const [trendingReviews, setTrendingReviews] = useState<Array<{
+    id: string;
+    mediaTitle: string;
+    rating: number;
+    content: string;
+    title: string | null;
+    username: string;
+    date: string;
+  }>>([]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +104,18 @@ export default function MoviesPage() {
       setSortedMovies([]);
     }
   }, [movies, sortBy]);
+
+  // Fetch trending reviews
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await getTrendingMovieReviews(5);
+        setTrendingReviews(data.reviews);
+      } catch (err) {
+        console.error('Failed to fetch trending reviews:', err);
+      }
+    })();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-300 via-cyan-200 to-teal-300">
@@ -213,6 +235,47 @@ export default function MoviesPage() {
             </p>
           </div>
         )}
+
+        {/* Trending Reviews Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-semibold mb-6 text-sky-800">Trending Reviews</h2>
+          {trendingReviews.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {trendingReviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="glass-strong rounded-2xl p-6 hover:shadow-xl transition-all"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-sky-800 mb-1 line-clamp-1">
+                        {review.mediaTitle}
+                      </h3>
+                      {review.title && (
+                        <p className="text-sm text-sky-600 mb-2 line-clamp-1">{review.title}</p>
+                      )}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-amber-500 text-lg">
+                          {'⭐'.repeat(Math.min(review.rating, 5))}
+                        </span>
+                        <span className="text-sm text-sky-600">({Math.min(review.rating, 5)}/5)</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sky-700 text-sm line-clamp-3 mb-3">{review.content}</p>
+                  <div className="flex items-center justify-between text-xs text-sky-500">
+                    <span>by {review.username}</span>
+                    <span>{review.date}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 glass-strong rounded-2xl">
+              <p className="text-sky-700 text-lg font-medium">No reviews yet. Be the first to review a movie!</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
