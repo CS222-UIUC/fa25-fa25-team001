@@ -34,53 +34,18 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Trending Section */}
+      {/* Lists Section */}
       <div className="container mx-auto px-8 py-12 relative z-10">
-        <h2 className="text-3xl font-bold mb-6 text-sky-800 drop-shadow-md">Trending</h2>
-        
-        {/* Scrolling Movie Bar */}
-        <div className="relative overflow-hidden">
-          <div className="flex gap-6 animate-scroll">
-            {/* Placeholder Movie Cards - Duplicated for seamless loop */}
-            {[...Array(2)].map((_, setIndex) => (
-              [1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div
-                  key={`${setIndex}-${i}`}
-                  className="flex-shrink-0 w-48 group cursor-pointer"
-                >
-                  <div className="aspect-[2/3] glass-strong rounded-2xl mb-3 group-hover:ring-2 group-hover:ring-cyan-400/50 transition-all transform group-hover:scale-105 shadow-lg hover:shadow-xl">
-                    <div className="w-full h-full flex items-center justify-center text-sky-700 font-medium">
-                      Movie {i}
-                    </div>
-                  </div>
-                  <h3 className="text-sm font-semibold truncate text-sky-800">Movie Title {i}</h3>
-                  <p className="text-xs text-sky-600">⭐ 4.5/5</p>
-                </div>
-              ))
-            ))}
-          </div>
-        </div>
+        <h2 className="text-3xl font-bold mb-6 text-sky-800 drop-shadow-md">Create Custom Lists</h2>
+        <p className="text-lg text-sky-700 mb-8 max-w-2xl">
+          Organize your favorite movies, TV shows, and games into custom lists. Create ranked lists like "Top 5 Games with the Best Battle Systems" or "Top 5 Movies with the Best Art Direction".
+        </p>
+        <Link href="/lists">
+          <button className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white rounded-2xl font-semibold text-lg transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl glow-soft">
+            View My Lists
+          </button>
+        </Link>
       </div>
-
-      {/* CSS for scroll animation */}
-      <style jsx>{`
-        @keyframes scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        
-        .animate-scroll {
-          animation: scroll 30s linear infinite;
-        }
-        
-        .animate-scroll:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
     </div>
   );
 }

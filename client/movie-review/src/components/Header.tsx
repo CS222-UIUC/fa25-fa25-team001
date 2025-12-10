@@ -1,30 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
-import { searchEverything } from '@/actions/search';
 
 export default function Header() {
-    const [searchQuery, setSearchQuery] = useState('');
     const { data: session } = useSession();
-    const [showResults, setShowResults] = useState(false);
     const [avatarOverride, setAvatarOverride] = useState<string | undefined>(undefined);
-    const [isLoading, setIsLoading] = useState(false);
-    const [movies, setMovies] = useState<Array<{id: string; title: string}>>([]);
-    const [users, setUsers] = useState<Array<{id: string; username: string}>>([]);
-    const containerRef = useRef<HTMLDivElement>(null);
-
-    // Close dropdown on outside click
-    useEffect(() => {
-        const onClick = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                setShowResults(false);
-            }
-        };
-        document.addEventListener('click', onClick);
-        return () => document.removeEventListener('click', onClick);
-    }, []);
 
     // Listen for profile updates to refresh avatar immediately
     useEffect(() => {
@@ -39,34 +21,6 @@ export default function Header() {
         return () => window.removeEventListener('profileUpdated', handler as EventListener);
     }, []);
 
-    // Debounced search
-    useEffect(() => {
-        if (!searchQuery || searchQuery.trim().length < 2) {
-            setMovies([]);
-            setUsers([]);
-            return;
-        }
-        setIsLoading(true);
-        const t = setTimeout(async () => {
-            try {
-                const data = await searchEverything(searchQuery.trim());
-                setMovies((data as any).movies || []);
-                setUsers((data as any).users || []);
-                setShowResults(true);
-            } catch {}
-            setIsLoading(false);
-        }, 300);
-        return () => clearTimeout(t);
-    }, [searchQuery]);
-
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        // Keep user on current page, just open results dropdown
-        if (searchQuery.trim()) {
-            setShowResults(true);
-        }
-    };
-
     return (
         <header className="glass-strong sticky top-0 z-50 backdrop-blur-lg">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -76,79 +30,6 @@ export default function Header() {
                         <Link href="/" className="text-xl font-bold bg-gradient-to-r from-cyan-600 to-teal-500 bg-clip-text text-transparent hover:from-cyan-500 hover:to-teal-400 transition-all">
                             Media Review
                         </Link>
-                    </div>
-
-                    {/* Search Bar */}
-                    <div className="flex-1 max-w-lg mx-8" ref={containerRef}>
-                        <form onSubmit={handleSearch} className="relative">
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg
-                                        className="h-5 w-5 text-gray-400"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                        aria-hidden="true"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                </div>
-                                <input
-                                    type="text"
-                                    placeholder="Search movies, users..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="block w-full pl-10 pr-3 py-2 border border-white/30 rounded-xl leading-5 glass placeholder-sky-700/60 text-sky-900 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 sm:text-sm transition-all"
-                                />
-                            </div>
-                            {/* Results dropdown */}
-                            {showResults && (
-                                <div className="absolute z-50 mt-2 w-full glass-strong rounded-2xl shadow-xl">
-                                    {isLoading ? (
-                                        <div className="p-4 text-sm text-sky-700 font-medium">Searching...</div>
-                                    ) : (
-                                        <div className="max-h-80 overflow-auto">
-                                            {/* Movies */}
-                                            <div className="p-2">
-                                                <div className="px-2 py-1 text-xs font-semibold text-sky-600 uppercase">Movies</div>
-                                                {movies.length === 0 ? (
-                                                    <div className="px-2 py-2 text-sm text-sky-600">No movies found</div>
-                                                ) : (
-                                                    movies.slice(0,5).map((m) => (
-                                                        <div key={m.id} className="px-2 py-2 hover:bg-white/20 cursor-pointer text-sm text-sky-800 rounded-lg transition-all" onClick={() => setShowResults(false)}>
-                                                            {m.title}
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                            <hr className="border-white/20" />
-                                            {/* Users */}
-                                            <div className="p-2">
-                                                <div className="px-2 py-1 text-xs font-semibold text-sky-600 uppercase">Users</div>
-                                                {users.length === 0 ? (
-                                                    <div className="px-2 py-2 text-sm text-sky-600">No users found</div>
-                                                ) : (
-                                                    users.slice(0,5).map((u) => (
-                                                        <div key={u.id} className="px-2 py-2 hover:bg-white/20 cursor-pointer text-sm text-sky-800 rounded-lg transition-all" onClick={() => setShowResults(false)}>
-                                                            {u.username}
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                            <div className="p-2 border-t border-white/20">
-                                                <Link href={`/search?q=${encodeURIComponent(searchQuery)}`} className="block text-center text-sm text-cyan-600 hover:text-cyan-500 font-semibold transition-colors" onClick={() => setShowResults(false)}>
-                                                    See all results
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </form>
                     </div>
 
                     {/* Navigation */}
@@ -162,10 +43,22 @@ export default function Header() {
                                     Movies
                                 </Link>
                                 <Link
+                                    href="/tv"
+                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
+                                >
+                                    TV Shows
+                                </Link>
+                                <Link
                                     href="/games"
                                     className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
                                 >
                                     Games
+                                </Link>
+                                <Link
+                                    href="/lists"
+                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
+                                >
+                                    My Lists
                                 </Link>
                                 <Link
                                     href="/dashboard"
@@ -196,6 +89,12 @@ export default function Header() {
                                     className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
                                 >
                                     Movies
+                                </Link>
+                                <Link
+                                    href="/tv"
+                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
+                                >
+                                    TV Shows
                                 </Link>
                                 <Link
                                     href="/games"
