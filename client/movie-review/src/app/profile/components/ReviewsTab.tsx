@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Star, Trash2, Film, Gamepad2, Tv, Filter, MessageSquare } from 'lucide-react';
 
 interface User {
   id: string;
@@ -36,8 +38,6 @@ export default function ReviewsTab({ user }: ReviewsTabProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('recent');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingReview, setEditingReview] = useState<Review | null>(null);
 
   useEffect(() => {
     loadReviews();
@@ -92,53 +92,17 @@ export default function ReviewsTab({ user }: ReviewsTabProps) {
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
-      <span
-        key={i}
-        className={`text-xl ${i < rating ? 'text-yellow-500' : 'text-gray-300'}`}
-      >
-        ★
-      </span>
+      <Star 
+        key={i} 
+        className={`h-4 w-4 ${i < rating ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'}`} 
+      />
     ));
-  };
-
-  const getMediaTitle = (review: Review) => {
-    return review.movie?.title || review.videoGame?.title || review.tvShow?.title || 'Unknown';
-  };
-
-  const getMediaType = (review: Review) => {
-    if (review.movie) return 'movie';
-    if (review.videoGame) return 'game';
-    if (review.tvShow) return 'tv';
-    return 'unknown';
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-    return date.toLocaleDateString();
   };
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="space-y-6">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-48 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -146,122 +110,108 @@ export default function ReviewsTab({ user }: ReviewsTabProps) {
   const isOwnProfile = session?.user?.id === user.id;
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {isOwnProfile ? 'My' : `${user.username}'s`} Reviews ({reviews.length})
-          </h2>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Controls */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">All Reviews ({reviews.length})</h2>
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="bg-secondary border border-input rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="recent">Most Recent</option>
+            <option value="highest">Highest Rated</option>
+            <option value="lowest">Lowest Rated</option>
+          </select>
+        </div>
+      </div>
+
+      {reviews.length > 0 ? (
+        <div className="grid gap-6">
+          {reviews.map((review) => {
+            const media = review.movie || review.videoGame || review.tvShow;
+            const mediaType = review.movie ? 'movie' : review.videoGame ? 'game' : 'tv';
+            const mediaImage = review.movie?.poster || review.videoGame?.cover || review.tvShow?.poster;
+            const mediaLink = review.movie 
+              ? `/movie/${review.movie.id}` 
+              : review.videoGame 
+                ? `/game/${review.videoGame.id}` 
+                : `/tv/${review.tvShow?.id}`;
+
+            return (
+              <div key={review.id} className="bg-card border border-border rounded-xl p-6 hover:border-primary/30 transition-colors flex flex-col md:flex-row gap-6">
+                {/* Media Poster */}
+                <Link href={mediaLink} className="flex-shrink-0 w-24 md:w-32 aspect-[2/3] bg-secondary rounded-lg overflow-hidden border border-border hover:ring-2 hover:ring-primary transition-all">
+                  {mediaImage ? (
+                    <img src={mediaImage} alt={media?.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Film className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  )}
+                </Link>
+
+                {/* Review Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <Link href={mediaLink} className="text-xl font-bold hover:text-primary transition-colors">
+                        {media?.title}
+                      </Link>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-0.5">
+                          {renderStars(review.rating)}
+                        </div>
+                        <span className="text-sm text-muted-foreground">• {new Date(review.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    
+                    {isOwnProfile && (
+                      <button
+                        onClick={() => handleDeleteReview(review.id)}
+                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
+                        title="Delete Review"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {review.title && (
+                    <h3 className="font-semibold text-lg mb-2">{review.title}</h3>
+                  )}
+                  
+                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                    {review.content}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="bg-card border border-border rounded-xl p-12 text-center">
+          <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+            <MessageSquare className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-medium mb-2">No reviews yet</h3>
+          <p className="text-muted-foreground">
+            {isOwnProfile 
+              ? "Start reviewing movies, games, and TV shows to see them here!" 
+              : "This user hasn't written any reviews yet."}
+          </p>
           {isOwnProfile && (
-            <div className="flex gap-2">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-              >
-                <option value="recent">Most Recent</option>
-                <option value="highest">Highest Rated</option>
-                <option value="lowest">Lowest Rated</option>
-              </select>
-              <button
-                onClick={() => router.push('/search?q=')}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
-              >
-                Write Review
-              </button>
-            </div>
+            <button
+              onClick={() => router.push('/search')}
+              className="mt-6 px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+            >
+              Find something to review
+            </button>
           )}
         </div>
-
-        {reviews.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">
-              {isOwnProfile ? "You haven't written any reviews yet." : `${user.username} hasn't written any reviews yet.`}
-            </p>
-            {isOwnProfile && (
-              <button
-                onClick={() => router.push('/search?q=')}
-                className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium"
-              >
-                Write Your First Review
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {reviews.map((review) => {
-              const posterUrl = review.movie?.poster || review.tvShow?.poster || review.videoGame?.cover;
-              
-              return (
-                <div
-                  key={review.id}
-                  className="border border-gray-200 rounded-lg p-6 hover:border-indigo-300 transition-colors bg-white"
-                >
-                  <div className="flex gap-6">
-                    {/* Media Info */}
-                    <div className="flex-shrink-0">
-                      <div className="w-24 h-36 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg overflow-hidden">
-                        {posterUrl ? (
-                          <img 
-                            src={posterUrl} 
-                            alt={getMediaTitle(review)} 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-indigo-600 font-bold text-sm text-center px-2">
-                            {getMediaTitle(review)}
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2 text-center capitalize">
-                        {getMediaType(review)}
-                      </p>
-                    </div>
-
-                    {/* Review Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-900 mb-2">
-                            {review.title || getMediaTitle(review)}
-                          </h3>
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="flex items-center">
-                              {renderStars(review.rating)}
-                            </div>
-                            <span className="text-gray-500 text-sm">{formatDate(review.createdAt)}</span>
-                          </div>
-                        </div>
-                        {isOwnProfile && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleDeleteReview(review.id)}
-                              className="text-red-600 hover:text-red-700 text-sm"
-                              title="Delete review"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      <p className="text-gray-700 leading-relaxed mb-4 whitespace-pre-wrap">
-                        {review.content}
-                      </p>
-
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span className="capitalize">{getMediaType(review)}</span>
-                        <span>•</span>
-                        <span>{review.rating}/5 stars</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

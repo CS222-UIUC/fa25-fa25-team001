@@ -104,14 +104,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if item already exists in list
+    // IMPORTANT: don't include null IDs in the OR clause, otherwise e.g. `{ movieId: null }`
+    // will match *any* TV/game item (movieId is null) and incorrectly block inserts.
+    const identityConditions: Array<
+      | { movieId: string }
+      | { tvShowId: string }
+      | { videoGameId: string }
+    > = [];
+    if (movieId) identityConditions.push({ movieId });
+    if (tvShowId) identityConditions.push({ tvShowId });
+    if (gameId) identityConditions.push({ videoGameId: gameId });
+
+    if (identityConditions.length === 0) {
+      return NextResponse.json({ error: 'Invalid media type' }, { status: 400 });
+    }
+
     const existingItem = await prisma.listItem.findFirst({
       where: {
         listId,
-        OR: [
-          { movieId: movieId },
-          { tvShowId: tvShowId },
-          { videoGameId: gameId },
-        ],
+        OR: identityConditions,
       },
     });
 

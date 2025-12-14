@@ -15,8 +15,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Steam ID required' }, { status: 400 });
     }
 
+    const steamApiKey = process.env.STEAM_API_KEY;
+    if (!steamApiKey) {
+      await prisma.platform_connections.upsert({
+        where: {
+          userId_platformType: {
+            userId: session.user.id,
+            platformType: 'steam'
+          }
+        },
+        update: {
+          platformUserId: steamId,
+          gamesData: [],
+          lastSyncedAt: new Date(),
+          updatedAt: new Date()
+        },
+        create: {
+          id: `steam_${session.user.id}`,
+          userId: session.user.id,
+          platformType: 'steam',
+          platformUserId: steamId,
+          gamesData: [],
+          lastSyncedAt: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      });
+
+      return NextResponse.json({
+        success: true,
+        gamesCount: 0,
+        warning: 'STEAM_API_KEY not set; connected without fetching library.'
+      });
+    }
+
     // Get Steam games using Steam API with detailed info and free games
-    const steamApiKey = process.env.STEAM_API_KEY!;
     const gamesResponse = await fetch(
       `https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/?key=${steamApiKey}&steamid=${steamId}&include_appinfo=true&include_played_free_games=true&format=json`
     );
@@ -27,13 +60,6 @@ export async function POST(request: NextRequest) {
 
     const steamData = await gamesResponse.json();
     const games = steamData.response?.games || [];
-
-    // Console log all Steam API data for debugging
-    console.log('=== STEAM API RESPONSE ===');
-    console.log('Full Response:', JSON.stringify(steamData, null, 2));
-    console.log('Game Count:', games.length);
-    console.log('Sample Game Data:', games.slice(0, 3));
-    console.log('========================');
 
     // Process and enhance game data
     const processedGames = games.map((game: any) => ({

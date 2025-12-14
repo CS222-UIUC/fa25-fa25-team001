@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Header from '@/components/Header';
 import Link from 'next/link';
+import { Star, Calendar, User, Gamepad2 } from 'lucide-react';
 
 interface Review {
   id: string;
@@ -45,7 +46,7 @@ export default function GameDetailPage() {
         if (data.games && data.games.length > 0) {
           setGame(data.games[0]);
         } else {
-          // Try to get by ID
+          // Try to get by ID directly if search failed (sometimes ID is passed directly)
           const idResponse = await fetch(`/api/rawg/games`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -111,39 +112,33 @@ export default function GameDetailPage() {
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
-      <span key={i} className={`text-xl ${i < rating ? 'text-yellow-500' : 'text-gray-300'}`}>
-        ★
-      </span>
+      <Star 
+        key={i} 
+        className={`h-5 w-5 ${i < rating ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'}`} 
+      />
     ));
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-600 border-t-transparent"></div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (!game) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-background text-foreground">
         <Header />
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <div className="text-center py-20">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Game Not Found</h1>
-            <button
-              onClick={() => router.push('/search')}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700"
-            >
-              Search Games
-            </button>
-          </div>
+        <div className="container mx-auto px-4 py-20 text-center">
+          <h1 className="text-3xl font-bold mb-4">Game Not Found</h1>
+          <button
+            onClick={() => router.push('/search')}
+            className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
+          >
+            Search Games
+          </button>
         </div>
       </div>
     );
@@ -154,171 +149,222 @@ export default function GameDetailPage() {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+    <div className="min-h-screen bg-background text-foreground">
       <Header />
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Game Header */}
-        <div className="bg-white rounded-xl shadow-lg p-8 mb-6 border border-gray-100">
-          <div className="flex gap-8">
-            <div className="flex-shrink-0">
-              <div className="w-64 h-96 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg overflow-hidden shadow-xl">
-                {game.cover ? (
-                  <img src={game.cover} alt={game.name} className="w-full h-full object-cover" />
+      
+      {/* Hero / Game Header */}
+      <div className="relative">
+        {/* Background Blur */}
+        <div className="absolute inset-0 overflow-hidden h-[500px] z-0">
+          {game.background_image && (
+            <img 
+              src={game.background_image} 
+              alt="" 
+              className="w-full h-full object-cover opacity-20 blur-3xl scale-110"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/80 to-background"></div>
+        </div>
+
+        <div className="container relative z-10 mx-auto px-4 py-12">
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Poster */}
+            <div className="flex-shrink-0 mx-auto md:mx-0">
+              <div className="w-64 aspect-[16/9] md:aspect-[2/3] rounded-xl overflow-hidden shadow-2xl ring-1 ring-white/10">
+                {game.background_image ? (
+                  <img src={game.background_image} alt={game.name} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-6xl">🎮</span>
+                  <div className="w-full h-full flex items-center justify-center bg-secondary text-muted-foreground">
+                    <Gamepad2 className="h-16 w-16" />
                   </div>
                 )}
               </div>
             </div>
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">{game.name}</h1>
-              <div className="flex items-center gap-4 mb-4 flex-wrap">
-                {game.releaseDate && (
-                  <span className="text-lg text-gray-600">
-                    {new Date(game.releaseDate).getFullYear()}
-                  </span>
-                )}
-                {game.platforms && game.platforms.length > 0 && (
-                  <div className="flex gap-2 flex-wrap">
-                    {game.platforms.slice(0, 3).map((platform: string, i: number) => (
-                      <span key={i} className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full">
-                        {platform}
-                      </span>
-                    ))}
+
+            {/* Info */}
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">{game.name}</h1>
+              
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-6 text-sm text-muted-foreground">
+                {game.released && (
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    <span>{new Date(game.released).getFullYear()}</span>
                   </div>
                 )}
                 {game.genres && game.genres.length > 0 && (
-                  <div className="flex gap-2 flex-wrap">
-                    {game.genres.slice(0, 3).map((genre: string, i: number) => (
-                      <span key={i} className="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full">
-                        {genre}
-                      </span>
-                    ))}
-                  </div>
+                  <span className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground border border-border">
+                    {game.genres[0].name}
+                  </span>
+                )}
+                {game.rating > 0 && (
+                  <span className="flex items-center gap-1 text-yellow-500">
+                    <Star className="h-4 w-4 fill-current" />
+                    RAWG: {game.rating}
+                  </span>
                 )}
               </div>
+
               {averageRating > 0 && (
-                <div className="mb-4">
-                  <div className="flex items-center gap-2">
-                    {renderStars(Math.round(averageRating))}
-                    <span className="text-lg font-semibold text-gray-900">
-                      {averageRating.toFixed(1)} ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
-                    </span>
+                <div className="mb-8 flex items-center justify-center md:justify-start gap-3">
+                  <div className="flex items-center gap-1">
+                    <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
+                    <span className="text-2xl font-bold">{averageRating.toFixed(1)}</span>
                   </div>
+                  <span className="text-muted-foreground">
+                    ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
+                  </span>
                 </div>
               )}
-              {game.summary && (
-                <p className="text-gray-700 mb-4 leading-relaxed">{game.summary}</p>
-              )}
+
               {session?.user?.id && (
                 <button
                   onClick={() => setShowReviewForm(!showReviewForm)}
-                  className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                  className="px-8 py-3 bg-primary text-primary-foreground rounded-full font-medium hover:bg-primary/90 transition-all shadow-lg hover:shadow-primary/25"
                 >
-                  {showReviewForm ? 'Cancel' : 'Write Review'}
+                  {showReviewForm ? 'Cancel Review' : 'Write a Review'}
                 </button>
               )}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Review Form */}
-        {showReviewForm && session?.user?.id && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Write a Review</h2>
-            <form onSubmit={handleSubmitReview} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title (optional)</label>
-                <input
-                  type="text"
-                  value={reviewForm.title}
-                  onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Review title..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
-                <select
-                  value={reviewForm.rating}
-                  onChange={(e) => setReviewForm({ ...reviewForm, rating: parseInt(e.target.value) })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                >
-                  {[5, 4, 3, 2, 1].map(r => (
-                    <option key={r} value={r}>{r} stars</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Review</label>
-                <textarea
-                  value={reviewForm.content}
-                  onChange={(e) => setReviewForm({ ...reviewForm, content: e.target.value })}
-                  rows={6}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                  placeholder="Share your thoughts..."
-                />
-              </div>
-              <button
-                type="submit"
-                className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-              >
-                Submit Review
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Reviews Section */}
-        <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Reviews ({reviews.length})
-          </h2>
-          {reviews.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No reviews yet. Be the first to review!</p>
-          ) : (
-            <div className="space-y-6">
-              {reviews.map((review) => (
-                <div key={review.id} className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
-                  <div className="flex items-start gap-4 mb-3">
-                    <Link href={`/profile/${review.user.username}`}>
-                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center overflow-hidden cursor-pointer">
-                        {review.user.profilePicture && review.user.profilePicture !== '/default.jpg' ? (
-                          <img src={review.user.profilePicture} alt={review.user.username} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-xl text-white">👤</span>
-                        )}
-                      </div>
-                    </Link>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Link href={`/profile/${review.user.username}`}>
-                          <span className="font-bold text-gray-900 hover:text-indigo-600 cursor-pointer">
-                            {review.user.username}
-                          </span>
-                        </Link>
-                        <div className="flex items-center">
-                          {renderStars(review.rating)}
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {review.title && (
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{review.title}</h3>
-                      )}
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{review.content}</p>
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Main Content - Reviews */}
+          <div className="md:col-span-2 space-y-8">
+            {/* Review Form */}
+            {showReviewForm && session?.user?.id && (
+              <div className="bg-card border border-border rounded-xl p-6 shadow-sm animate-in slide-in-from-top-4 duration-200">
+                <h2 className="text-xl font-bold mb-4">Write a Review</h2>
+                <form onSubmit={handleSubmitReview} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Title (optional)</label>
+                    <input
+                      type="text"
+                      value={reviewForm.title}
+                      onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
+                      className="w-full px-4 py-2 bg-secondary border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                      placeholder="Review title..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Rating</label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((rating) => (
+                        <button
+                          key={rating}
+                          type="button"
+                          onClick={() => setReviewForm({ ...reviewForm, rating })}
+                          className="focus:outline-none"
+                        >
+                          <Star 
+                            className={`h-8 w-8 ${rating <= reviewForm.rating ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'}`} 
+                          />
+                        </button>
+                      ))}
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Review</label>
+                    <textarea
+                      value={reviewForm.content}
+                      onChange={(e) => setReviewForm({ ...reviewForm, content: e.target.value })}
+                      rows={6}
+                      required
+                      className="w-full px-4 py-2 bg-secondary border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                      placeholder="Share your thoughts..."
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                  >
+                    Submit Review
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Reviews List */}
+            <div>
+              <h2 className="text-2xl font-bold mb-6">Reviews</h2>
+              {reviews.length === 0 ? (
+                <div className="text-center py-12 bg-card border border-border rounded-xl">
+                  <p className="text-muted-foreground">No reviews yet. Be the first to review!</p>
                 </div>
-              ))}
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="bg-card border border-border rounded-xl p-6 shadow-sm hover:border-primary/20 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <Link href={`/profile/${review.user.username}`} className="flex-shrink-0">
+                          <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center overflow-hidden ring-2 ring-background">
+                            {review.user.profilePicture && review.user.profilePicture !== '/default.jpg' ? (
+                              <img src={review.user.profilePicture} alt={review.user.username} className="w-full h-full object-cover" />
+                            ) : (
+                              <User className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </div>
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-2">
+                            <Link href={`/profile/${review.user.username}`} className="font-semibold hover:text-primary transition-colors truncate">
+                              {review.user.username}
+                            </Link>
+                            <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center mb-2">
+                            {renderStars(review.rating)}
+                          </div>
+                          {review.title && (
+                            <h3 className="text-lg font-semibold mb-2">{review.title}</h3>
+                          )}
+                          <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{review.content}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Sidebar Info (Plot, etc) */}
+          <div className="space-y-6">
+            {/* RAWG doesn't always provide a short description in the list view, but we can try */}
+            {/* If we had a description, we would show it here */}
+            
+            {/* Additional metadata */}
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
+              <h3 className="font-semibold text-lg">Game Info</h3>
+              
+              {game.platforms && (
+                <div>
+                  <span className="text-sm text-muted-foreground block mb-1">Platforms</span>
+                  <div className="flex flex-wrap gap-2">
+                    {game.platforms.map((p: any) => (
+                      <span key={p.platform.id} className="text-xs px-2 py-1 bg-secondary rounded-md">
+                        {p.platform.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {game.publishers && game.publishers.length > 0 && (
+                <div>
+                  <span className="text-sm text-muted-foreground block mb-1">Publisher</span>
+                  <span className="text-sm">{game.publishers[0].name}</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

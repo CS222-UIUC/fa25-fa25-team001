@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import FavoritesManager from './FavoritesManager';
+import Link from 'next/link';
+import { Star, Activity, User, Film, Gamepad2, Tv, Clock, Heart, ArrowRight, Sparkles } from 'lucide-react';
 
 interface User {
   id?: string;
@@ -17,56 +17,33 @@ interface HomeTabProps {
   user: User;
 }
 
-interface Activity {
+interface ActivityItem {
   id: string;
   type: string;
-  platform?: string;
   title: string;
   image?: string;
-  playedAt?: Date;
-  watchedAt?: Date;
-  hours?: number;
   rating?: number;
-  year?: number;
 }
 
-interface Review {
+interface FavoriteItem {
   id: string;
-  title?: string;
-  content: string;
-  rating: number;
-  createdAt: string;
-  movie?: { id: string; title: string; poster?: string };
-  videoGame?: { id: string; title: string; cover?: string };
-  tvShow?: { id: string; title: string; poster?: string };
+  title: string;
+  image?: string;
+  type: 'movie' | 'tv' | 'game';
 }
 
-interface Friend {
+interface ListItem {
   id: string;
-  username: string;
-  profilePicture: string;
-  bio?: string;
-}
-
-interface Favorites {
-  favoriteGames: any[];
-  favoriteMovies: any[];
-  favoriteTvShows: any[];
+  title: string;
+  count: number;
 }
 
 export default function HomeTab({ user }: HomeTabProps) {
   const { data: session } = useSession();
-  const router = useRouter();
-  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
-  const [recentReviews, setRecentReviews] = useState<Review[]>([]);
-  const [friends, setFriends] = useState<Friend[]>([]);
-  const [favorites, setFavorites] = useState<Favorites>({
-    favoriteGames: [],
-    favoriteMovies: [],
-    favoriteTvShows: [],
-  });
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+  const [lists, setLists] = useState<ListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showFavoritesModal, setShowFavoritesModal] = useState(false);
 
   const isOwnProfile = session?.user?.id === user.id;
 
@@ -79,309 +56,208 @@ export default function HomeTab({ user }: HomeTabProps) {
   const loadData = async () => {
     try {
       // Load recent activity
-      const activityRes = await fetch(`/api/users/activity?userId=${user.id}&limit=8`);
+      const activityRes = await fetch(`/api/users/activity?userId=${user.id}&limit=5`);
       if (activityRes.ok) {
-        const activityData = await activityRes.json();
-        setRecentActivity(activityData.activities || []);
+        const data = await activityRes.json();
+        setRecentActivity(data.activities || []);
       }
 
-      // Load recent reviews
-      const reviewsRes = await fetch(`/api/reviews/list?userId=${user.id}&limit=3`);
-      if (reviewsRes.ok) {
-        const reviewsData = await reviewsRes.json();
-        setRecentReviews(reviewsData.reviews || []);
+      // Load favorites preview
+      const favRes = await fetch(`/api/users/favorites?userId=${user.id}`);
+      if (favRes.ok) {
+        const data = await favRes.json();
+        const favs: FavoriteItem[] = [];
+        
+        // Get top 2 of each
+        if (data.favoriteMovies) {
+          data.favoriteMovies.slice(0, 2).forEach((m: any) => favs.push({
+            id: m.id, title: m.title, image: m.poster, type: 'movie'
+          }));
+        }
+        if (data.favoriteTvShows) {
+          data.favoriteTvShows.slice(0, 2).forEach((t: any) => favs.push({
+            id: t.id, title: t.title, image: t.poster, type: 'tv'
+          }));
+        }
+        if (data.favoriteGames) {
+          data.favoriteGames.slice(0, 2).forEach((g: any) => favs.push({
+            id: g.id, title: g.name, image: g.background_image || g.cover, type: 'game'
+          }));
+        }
+        setFavorites(favs);
       }
 
-      // Load friends
-      const friendsRes = await fetch(`/api/friends/list?userId=${user.id}`);
-      if (friendsRes.ok) {
-        const friendsData = await friendsRes.json();
-        setFriends((friendsData.friends || []).slice(0, 4));
+      // Load lists preview
+      const listsRes = await fetch(`/api/lists?userId=${user.id}`);
+      if (listsRes.ok) {
+        const data = await listsRes.json();
+        setLists(data.lists.slice(0, 3).map((l: any) => ({
+          id: l.id,
+          title: l.title,
+          count: l._count.items
+        })));
       }
 
-      // Load favorites
-      const favoritesRes = await fetch(`/api/users/favorites?userId=${user.id}`);
-      if (favoritesRes.ok) {
-        const favoritesData = await favoritesRes.json();
-        setFavorites(favoritesData);
-      }
     } catch (error) {
-      console.error('Failed to load home tab data:', error);
+      console.error('Failed to load home data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    return `${Math.floor(diffDays / 30)} months ago`;
-  };
-
   const renderStars = (rating: number) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <span key={`full-${i}`} className="text-yellow-500 text-2xl">★</span>
-      );
-    }
-
-    if (hasHalfStar) {
-      stars.push(
-        <span key="half" className="text-yellow-500 text-2xl">★</span>
-      );
-    }
-
-    const emptyStars = 5 - Math.ceil(rating);
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(
-        <span key={`empty-${i}`} className="text-gray-300 text-2xl">★</span>
-      );
-    }
-
-    return stars;
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star 
+        key={i} 
+        className={`h-3 w-3 ${i < rating ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'}`} 
+      />
+    ));
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      {/* Left Sidebar */}
-      <div className="lg:col-span-1 space-y-6">
-        {/* Bio Section */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Bio</h2>
-          <p className="text-gray-600 leading-relaxed break-words whitespace-pre-line max-w-full">
-            {user.bio || 'No bio added yet.'}
-          </p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Welcome / Hero Section */}
+      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl p-8 border border-primary/10">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-3xl font-bold mb-2">
+              {isOwnProfile ? `Welcome back, ${user.username}!` : `${user.username}'s Overview`}
+            </h2>
+            <p className="text-muted-foreground max-w-xl">
+              {user.bio || "No bio yet."}
+            </p>
+          </div>
+          <div className="hidden md:block">
+            <Sparkles className="h-12 w-12 text-primary/40" />
+          </div>
         </div>
+        
+        {/* Quick Stats / Actions */}
+        <div className="flex gap-4 mt-6">
+          <div className="flex items-center gap-2 bg-card/50 px-4 py-2 rounded-full border border-border/50">
+            <Heart className="h-4 w-4 text-red-500" />
+            <span className="font-medium">{favorites.length} Favorites</span>
+          </div>
+          <div className="flex items-center gap-2 bg-card/50 px-4 py-2 rounded-full border border-border/50">
+            <Clock className="h-4 w-4 text-blue-500" />
+            <span className="font-medium">{lists.length} Lists</span>
+          </div>
+        </div>
+      </div>
 
-        {/* Favorites Section */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Favorites</h2>
-            <button
-              onClick={() => setShowFavoritesModal(true)}
-              className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm"
-            >
-              {isOwnProfile ? 'Edit' : 'View All'}
-            </button>
+      <div className="grid md:grid-cols-2 gap-8">
+        {/* Favorites Preview */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold flex items-center gap-2">
+              <Heart className="h-5 w-5 text-primary" />
+              Top Favorites
+            </h3>
           </div>
           
-          {favorites.favoriteGames.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">🎮 Games</h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                {favorites.favoriteGames.slice(0, 3).map((game: any, idx: number) => (
-                  <li key={idx} className="truncate">{game.title || game.name}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          {favorites.favoriteMovies.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">🎬 Movies</h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                {favorites.favoriteMovies.slice(0, 3).map((movie: any, idx: number) => (
-                  <li key={idx} className="truncate">{movie.title}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          {favorites.favoriteTvShows.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">📺 TV Shows</h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                {favorites.favoriteTvShows.slice(0, 3).map((show: any, idx: number) => (
-                  <li key={idx} className="truncate">{show.title}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          {favorites.favoriteGames.length === 0 && 
-           favorites.favoriteMovies.length === 0 && 
-           favorites.favoriteTvShows.length === 0 && (
-            <p className="text-gray-500 text-sm">
-              {isOwnProfile ? 'Add your favorites to showcase them!' : 'No favorites added yet'}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="lg:col-span-3 space-y-6">
-        {/* Recent Activity Section */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Recent Activity</h2>
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
-            </div>
-          ) : recentActivity.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {recentActivity.map((item) => (
-                <div
-                  key={item.id}
-                  className="group cursor-pointer"
-                  onClick={() => {
-                    if (item.type === 'movie' && item.id.startsWith('movie_')) {
-                      router.push(`/movie/${item.id.replace('movie_', '')}`);
-                    } else if (item.type === 'tvshow' && item.id.startsWith('tvshow_')) {
-                      router.push(`/tv/${item.id.replace('tvshow_', '')}`);
-                    } else if (item.type === 'game') {
-                      // Could link to game page if you have one
-                    }
-                  }}
+          {favorites.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3">
+              {favorites.map((item) => (
+                <Link 
+                  key={`${item.type}-${item.id}`} 
+                  href={`/${item.type === 'game' ? 'game' : item.type === 'movie' ? 'movie' : 'tv'}/${item.id}`}
+                  className="group relative aspect-video bg-secondary rounded-xl overflow-hidden border border-border hover:border-primary/50 transition-all"
                 >
-                  <div className="aspect-[2/3] bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center hover:ring-2 hover:ring-indigo-500 transition-all overflow-hidden">
-                    {item.image ? (
-                      <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-gray-400 text-sm text-center px-2">{item.title}</span>
-                    )}
+                  {item.image ? (
+                    <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      {item.type === 'movie' ? <Film /> : item.type === 'tv' ? <Tv /> : <Gamepad2 />}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-3">
+                    <p className="text-white font-medium text-sm truncate">{item.title}</p>
+                    <p className="text-white/70 text-xs capitalize">{item.type}</p>
                   </div>
-                  <p className="text-xs text-gray-700 mt-2 truncate font-medium">{item.title}</p>
-                  {item.platform && (
-                    <p className="text-xs text-gray-500">{item.platform}</p>
-                  )}
-                  {item.hours && (
-                    <p className="text-xs text-gray-500">{item.hours}h</p>
-                  )}
-                </div>
+                </Link>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-8">No recent activity</p>
-          )}
-        </div>
-
-        {/* Recent Reviews Section */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Recent Reviews</h2>
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
+            <div className="bg-card border border-border rounded-xl p-6 text-center text-muted-foreground">
+              No favorites added yet.
             </div>
-          ) : recentReviews.length > 0 ? (
-            <div className="space-y-6">
-              {recentReviews.map((review) => {
-                const mediaTitle = review.movie?.title || review.videoGame?.title || review.tvShow?.title || 'Unknown';
-                const mediaId = review.movie?.id || review.videoGame?.id || review.tvShow?.id;
-                const mediaType = review.movie ? 'movie' : review.videoGame ? 'game' : 'tv';
-                const posterUrl = review.movie?.poster || review.tvShow?.poster || review.videoGame?.cover;
-                
-                return (
-                  <div
-                    key={review.id}
-                    className="flex gap-4 p-4 border border-gray-200 rounded-lg hover:border-indigo-300 transition-colors cursor-pointer"
-                    onClick={() => {
-                      if (mediaType === 'movie') router.push(`/movie/${mediaId}`);
-                      else if (mediaType === 'tv') router.push(`/tv/${mediaId}`);
-                      else if (mediaType === 'game') router.push(`/game/${mediaId}`);
-                    }}
-                  >
-                    {/* Media Poster Thumbnail */}
-                    <div className="flex-shrink-0 w-24 h-36 bg-gray-200 rounded overflow-hidden flex items-center justify-center">
-                      {posterUrl ? (
-                        <img src={posterUrl} alt={mediaTitle} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-gray-400 text-xs text-center px-2">{mediaType}</span>
-                      )}
-                    </div>
+          )}
+        </section>
 
-                    {/* Review Content */}
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">{mediaTitle}</h3>
-                      <div className="flex items-center gap-2 mb-3">
-                        {renderStars(review.rating)}
-                        <span className="text-gray-500 text-sm ml-2">{formatDate(review.createdAt)}</span>
-                      </div>
-                      {review.title && (
-                        <h4 className="font-semibold text-gray-800 mb-1">{review.title}</h4>
-                      )}
-                      <p className="text-gray-600 leading-relaxed line-clamp-3">{review.content}</p>
+        {/* Lists Preview */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" />
+              Recent Lists
+            </h3>
+          </div>
+
+          <div className="space-y-3">
+            {lists.length > 0 ? (
+              lists.map((list) => (
+                <div key={list.id} className="group bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-all flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                      <Clock className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium">{list.title}</h4>
+                      <p className="text-xs text-muted-foreground">{list.count} items</p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-8">No reviews yet</p>
-          )}
-        </div>
-
-        {/* Friends Section */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Friends</h2>
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
-            </div>
-          ) : friends.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {friends.map((friend) => (
-                <div
-                  key={friend.id}
-                  className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:border-indigo-300 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/profile/${friend.username}`)}
-                >
-                  {/* Friend Profile Picture */}
-                  <div className="flex-shrink-0 w-16 h-16 rounded-full overflow-hidden bg-gray-200">
-                    {friend.profilePicture && friend.profilePicture !== '/default.jpg' ? (
-                      <img src={friend.profilePicture} alt={friend.username} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-2xl text-gray-400">☺</div>
-                    )}
-                  </div>
-
-                  {/* Friend Info */}
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900">{friend.username}</h3>
-                    {friend.bio && (
-                      <p className="text-sm text-gray-500 truncate">{friend.bio}</p>
-                    )}
-                  </div>
-
-                  {/* View Profile Button */}
-                  <button 
-                    className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/profile/${friend.username}`);
-                    }}
-                  >
-                    View
-                  </button>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-8">No friends yet</p>
-          )}
-        </div>
+              ))
+            ) : (
+              <div className="bg-card border border-border rounded-xl p-6 text-center text-muted-foreground">
+                No lists created yet.
+              </div>
+            )}
+          </div>
+        </section>
       </div>
 
-      {/* Favorites Manager Modal */}
-      {showFavoritesModal && user.id && (
-        <FavoritesManager 
-          userId={user.id} 
-          onClose={() => {
-            setShowFavoritesModal(false);
-            loadData(); // Reload data when modal closes
-          }} 
-        />
-      )}
+      {/* Recent Activity */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            <Activity className="h-5 w-5 text-primary" />
+            Recent Activity
+          </h3>
+        </div>
+
+        {recentActivity.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {recentActivity.map((item) => (
+              <div key={item.id} className="group relative aspect-[2/3] bg-secondary rounded-xl overflow-hidden border border-border hover:border-primary/50 transition-all">
+                {item.image ? (
+                  <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Activity className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                  <p className="text-white font-medium text-sm truncate">{item.title}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-card border border-border rounded-xl p-8 text-center text-muted-foreground">
+            No recent activity.
+          </div>
+        )}
+      </section>
     </div>
   );
 }

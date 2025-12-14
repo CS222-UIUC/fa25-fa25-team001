@@ -22,6 +22,14 @@ export async function GET(request: NextRequest) {
         bio: true,
         profilePicture: true,
         createdAt: true,
+        platform_connections: {
+          select: {
+            platformType: true,
+            platformUserId: true,
+            lastSyncedAt: true,
+            gamesData: true,
+          }
+        }
       },
     });
 
@@ -29,8 +37,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Get friends count
-    const friendsCount = await prisma.userFriend.count({
+    // Follow graph counts
+    const followersCount = await prisma.userFriend.count({
+      where: { friendId: user.id },
+    });
+
+    const followingCount = await prisma.userFriend.count({
       where: { userId: user.id },
     });
 
@@ -39,8 +51,8 @@ export async function GET(request: NextRequest) {
       where: { userId: user.id },
     });
 
-    // Check if current user is friends with this user
-    let isFriend = false;
+    // Check if current user follows this user
+    let isFollowing = false;
     if (session?.user?.id && session.user.id !== user.id) {
       const friendship = await prisma.userFriend.findUnique({
         where: {
@@ -50,15 +62,20 @@ export async function GET(request: NextRequest) {
           },
         },
       });
-      isFriend = !!friendship;
+      isFollowing = !!friendship;
     }
 
     return NextResponse.json({
       success: true,
       user,
-      friendsCount,
+      // Backwards-compatible field name (was used as "friends")
+      friendsCount: followersCount,
+      followersCount,
+      followingCount,
       reviewsCount,
-      isFriend,
+      // Backwards-compatible field name
+      isFriend: isFollowing,
+      isFollowing,
     });
   } catch (error: any) {
     console.error('Get user profile error:', error);
