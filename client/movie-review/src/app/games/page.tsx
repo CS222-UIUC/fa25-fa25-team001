@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import TrendingMediaScroll from '@/components/TrendingMediaScroll';
+import MediaStatusHover from '@/components/MediaStatusHover';
+import Link from 'next/link';
 
 interface Game {
   id: number;
@@ -10,8 +13,8 @@ interface Game {
   summary?: string;
   rating?: string;
   cover?: string;
-  genres: string[];
-  platforms: string[];
+  genres?: string[];
+  platforms?: string[];
   releaseDate?: string;
 }
 
@@ -58,8 +61,17 @@ const sortGames = (gamesToSort: Game[], sortOption: SortOption): Game[] => {
   }
 };
 
+const GAME_GENRES = [
+  'Action', 'Adventure', 'Fighting', 'Music', 'Platform', 'Puzzle', 'Racing',
+  'Role-playing (RPG)', 'Shooter', 'Simulation', 'Sport', 'Strategy', 'Turn-based strategy',
+  'Tactical', 'Hack and slash/Beat \'em up', 'Indie', 'Arcade', 'Visual Novel', 'Card & Board Game',
+  'MOBA', 'Point-and-click', 'Real Time Strategy (RTS)', 'Roguelike', 'Pinball', 'Quiz/Trivia'
+];
+
 export default function GamesPage() {
+  const [searchMode, setSearchMode] = useState<'title' | 'genre'>('title');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState('');
   const [games, setGames] = useState<Game[]>([]);
   const [sortedGames, setSortedGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,8 +82,13 @@ export default function GamesPage() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!searchQuery.trim()) {
+    if (searchMode === 'title' && !searchQuery.trim()) {
       setError('Please enter a search query');
+      return;
+    }
+
+    if (searchMode === 'genre' && !selectedGenre) {
+      setError('Please select a genre');
       return;
     }
 
@@ -80,7 +97,13 @@ export default function GamesPage() {
     setSearched(true);
 
     try {
-      const response = await fetch(`/api/games/search?q=${encodeURIComponent(searchQuery)}`);
+      let response;
+      if (searchMode === 'genre') {
+        response = await fetch(`/api/games/genre?genre=${encodeURIComponent(selectedGenre)}&limit=20`);
+      } else {
+        response = await fetch(`/api/games/search?q=${encodeURIComponent(searchQuery)}`);
+      }
+      
       const data = await response.json();
 
       if (data.success) {
@@ -102,11 +125,44 @@ export default function GamesPage() {
     }
   };
 
+  const handleGenreChange = (genre: string) => {
+    setSelectedGenre(genre);
+    if (genre) {
+      // Auto-search when genre is selected
+      setSearched(true);
+      setLoading(true);
+      setError('');
+      
+      fetch(`/api/games/genre?genre=${encodeURIComponent(genre)}&limit=20`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setGames(data.games || []);
+          } else {
+            setError(data.error || 'Failed to search games');
+            setGames([]);
+            setSortedGames([]);
+          }
+        })
+        .catch(err => {
+          console.error('Genre search error:', err);
+          setError('An error occurred while searching');
+          setGames([]);
+          setSortedGames([]);
+        })
+        .finally(() => setLoading(false));
+    }
+  };
+
   const getDefaultCover = () => 'https://via.placeholder.com/300x400?text=No+Cover';
 
   const formatDate = (dateStr?: string) => {
-    if (!dateStr) return 'Unknown';
-    return new Date(dateStr).getFullYear();
+    if (!dateStr) return '';
+    try {
+      return new Date(dateStr).getFullYear();
+    } catch {
+      return '';
+    }
   };
 
   // Apply sorting when games or sortBy changes
@@ -129,25 +185,76 @@ export default function GamesPage() {
           <p className="text-lg text-sky-700 font-medium">Search and discover games</p>
         </div>
 
+        {/* Search Mode Toggle */}
+        <div className="mb-4 flex gap-4">
+          <button
+            onClick={() => {
+              setSearchMode('title');
+              setSearched(false);
+              setGames([]);
+              setSearchQuery('');
+            }}
+            className={`px-4 py-2 rounded-xl font-semibold transition-all ${
+              searchMode === 'title'
+                ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg'
+                : 'glass-strong text-sky-800 hover:bg-white/20'
+            }`}
+          >
+            Search by Title
+          </button>
+          <button
+            onClick={() => {
+              setSearchMode('genre');
+              setSearched(false);
+              setGames([]);
+              setSelectedGenre('');
+            }}
+            className={`px-4 py-2 rounded-xl font-semibold transition-all ${
+              searchMode === 'genre'
+                ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg'
+                : 'glass-strong text-sky-800 hover:bg-white/20'
+            }`}
+          >
+            Search by Genre
+          </button>
+        </div>
+
         {/* Search Bar */}
-        <form onSubmit={handleSearch} className="mb-8">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for games..."
-              className="flex-1 px-4 py-3 glass-strong rounded-2xl text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 text-lg transition-all"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-2xl transition-all shadow-lg hover:shadow-xl glow-soft disabled:opacity-50 disabled:cursor-not-allowed"
+        {searchMode === 'title' ? (
+          <form onSubmit={handleSearch} className="mb-8">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for games..."
+                className="flex-1 px-4 py-3 glass-strong rounded-2xl text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 text-lg transition-all"
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-2xl transition-all shadow-lg hover:shadow-xl glow-soft disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Searching...' : 'Search'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mb-8">
+            <select
+              value={selectedGenre}
+              onChange={(e) => handleGenreChange(e.target.value)}
+              className="w-full px-4 py-3 glass-strong rounded-2xl text-sky-900 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 text-lg transition-all"
             >
-              {loading ? 'Searching...' : 'Search'}
-            </button>
+              <option value="">Select a genre...</option>
+              {GAME_GENRES.map((genre) => (
+                <option key={genre} value={genre}>
+                  {genre}
+                </option>
+              ))}
+            </select>
           </div>
-        </form>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -185,38 +292,44 @@ export default function GamesPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {sortedGames.map((game, index) => (
-                    <a
+                    <MediaStatusHover
                       key={`${game.id}-${index}`}
-                      href={`#`}
-                      className="group glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105"
+                      mediaId={String(game.id)}
+                      mediaType="game"
+                      mediaTitle={game.name}
+                      currentStatus={null}
                     >
-                      <div className="aspect-[3/4] bg-gradient-to-br from-cyan-100 to-teal-100 overflow-hidden rounded-t-2xl">
-                        <img
-                          src={game.cover || getDefaultCover()}
-                          alt={game.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
+                      <div className="group glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105 relative">
+                        <Link href={`/games/${game.id}`}>
+                          <div className="aspect-[3/4] bg-gradient-to-br from-cyan-100 to-teal-100 overflow-hidden rounded-t-2xl">
+                            <img
+                              src={game.cover || getDefaultCover()}
+                              alt={game.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            />
+                          </div>
+                          <div className="p-4">
+                            <h3 className="font-semibold text-sky-800 mb-1 line-clamp-2 group-hover:text-cyan-600 transition-colors">
+                              {game.name}
+                            </h3>
+                            <div className="flex items-center justify-between text-sm text-sky-600">
+                              <p>{formatDate(game.releaseDate)}</p>
+                              {game.rating && (
+                                <span className="flex items-center text-amber-500">
+                                  ⭐ {game.rating}
+                                </span>
+                              )}
+                            </div>
+                            {game.platforms && game.platforms.length > 0 && (
+                              <p className="text-xs text-sky-500 mt-2 line-clamp-1">
+                                {game.platforms.slice(0, 3).join(', ')}
+                                {game.platforms.length > 3 && '...'}
+                              </p>
+                            )}
+                          </div>
+                        </Link>
                       </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold text-sky-800 mb-1 line-clamp-2 group-hover:text-cyan-600 transition-colors">
-                          {game.name}
-                        </h3>
-                        <div className="flex items-center justify-between text-sm text-sky-600">
-                          <p>{formatDate(game.releaseDate)}</p>
-                          {game.rating && (
-                            <span className="flex items-center text-amber-500">
-                              ⭐ {game.rating}
-                            </span>
-                          )}
-                        </div>
-                        {game.platforms.length > 0 && (
-                          <p className="text-xs text-sky-500 mt-2 line-clamp-1">
-                            {game.platforms.slice(0, 3).join(', ')}
-                            {game.platforms.length > 3 && '...'}
-                          </p>
-                        )}
-                      </div>
-                    </a>
+                    </MediaStatusHover>
                   ))}
                 </div>
               </>
@@ -228,24 +341,19 @@ export default function GamesPage() {
           </div>
         )}
 
-        {/* Featured Games - Show when no search */}
+        {/* Trending Games - Show when no search */}
         {!searched && !loading && (
           <div>
-            <h2 className="text-2xl font-semibold mb-4 text-sky-800">Featured Games</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {['The Witcher 3', 'Elden Ring', 'God of War', 'Cyberpunk 2077'].map((title) => (
-                <div
-                  key={title}
-                  className="glass-strong rounded-2xl overflow-hidden animate-pulse"
-                >
-                  <div className="aspect-[3/4] bg-gradient-to-br from-cyan-200 to-teal-200" />
-                  <div className="p-4">
-                    <div className="h-4 bg-sky-300/50 rounded mb-2" />
-                    <div className="h-4 bg-sky-300/50 rounded w-2/3" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <TrendingMediaScroll
+              mediaType="game"
+              apiEndpoint="/api/games/popular?limit=20"
+              getPosterUrl={(item) => item.cover || ''}
+              getTitle={(item) => item.name}
+              getYear={(item) => item.first_release_date ? new Date(item.first_release_date * 1000).getFullYear() : null}
+              getMediaId={(item) => String(item.id)}
+              getDetailUrl={(item) => `/games/${item.id}`}
+              aspectRatio="aspect-[3/4]"
+            />
             <p className="text-center text-sky-700 mt-8 font-medium">
               Search for your favorite games above!
             </p>

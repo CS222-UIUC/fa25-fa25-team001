@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 
 export default function Header() {
     const { data: session } = useSession();
@@ -35,53 +35,24 @@ export default function Header() {
                     {/* Navigation */}
                     <nav className="flex items-center space-x-4">
                         {session ? (
-                            <div className="flex items-center space-x-4">
-                                <Link
-                                    href="/movies"
-                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
-                                >
-                                    Movies
-                                </Link>
-                                <Link
-                                    href="/tv"
-                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
-                                >
-                                    TV Shows
-                                </Link>
-                                <Link
-                                    href="/games"
-                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
-                                >
-                                    Games
-                                </Link>
-                                <Link
-                                    href="/lists"
-                                    className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
-                                >
-                                    My Lists
-                                </Link>
+                            <>
                                 <Link
                                     href="/dashboard"
                                     className="text-sky-800 hover:text-cyan-600 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:bg-white/20"
                                 >
                                     Dashboard
                                 </Link>
-                                <img
-                                    src={avatarOverride || session.user?.image || '/default.jpg'}
-                                    alt="Profile"
-                                    className="w-8 h-8 rounded-full cursor-pointer"
-                                    onClick={() => window.location.href = '/user/profile'}
-                                />
-                                <button
-                                    onClick={async () => {
-                                        await signOut({ redirect: false });
-                                        window.location.href = '/';
-                                    }}
-                                    className="bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg hover:shadow-xl glow-soft"
+                                <Link
+                                    href="/user/profile"
+                                    className="flex items-center justify-center"
                                 >
-                                    Sign Out
-                                </button>
-                            </div>
+                                    <img
+                                        src={avatarOverride || session.user?.image || '/default.jpg'}
+                                        alt="Profile"
+                                        className="w-10 h-10 rounded-full cursor-pointer ring-2 ring-cyan-300/50 hover:ring-cyan-400/70 transition-all hover:scale-110"
+                                    />
+                                </Link>
+                            </>
                         ) : (
                             <>
                                 <Link

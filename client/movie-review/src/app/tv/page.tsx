@@ -16,6 +16,9 @@
 
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import TrendingMediaScroll from '@/components/TrendingMediaScroll';
+import MediaStatusHover from '@/components/MediaStatusHover';
+import Link from 'next/link';
 
 interface TvShow {
   Title: string;
@@ -54,8 +57,16 @@ const sortShows = (showsToSort: TvShow[], sortOption: SortOption): TvShow[] => {
   }
 };
 
+const TV_GENRES = [
+  'Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary',
+  'Drama', 'Family', 'Fantasy', 'Horror', 'Mystery', 'Reality-TV',
+  'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western'
+];
+
 export default function TvShowsPage() {
+  const [searchMode, setSearchMode] = useState<'title' | 'genre'>('title');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState('');
   const [shows, setShows] = useState<TvShow[]>([]);
   const [sortedShows, setSortedShows] = useState<TvShow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,8 +77,13 @@ export default function TvShowsPage() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!searchQuery.trim()) {
+    if (searchMode === 'title' && !searchQuery.trim()) {
       setError('Please enter a search query');
+      return;
+    }
+
+    if (searchMode === 'genre' && !selectedGenre) {
+      setError('Please select a genre');
       return;
     }
 
@@ -76,7 +92,13 @@ export default function TvShowsPage() {
     setSearched(true);
 
     try {
-      const response = await fetch(`/api/tv/search?q=${encodeURIComponent(searchQuery)}`);
+      let response;
+      if (searchMode === 'genre') {
+        response = await fetch(`/api/tv/genre?genre=${encodeURIComponent(selectedGenre)}&limit=20`);
+      } else {
+        response = await fetch(`/api/tv/search?q=${encodeURIComponent(searchQuery)}`);
+      }
+      
       const data = await response.json();
 
       if (data.success) {
@@ -95,6 +117,35 @@ export default function TvShowsPage() {
       setSortedShows([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenreChange = (genre: string) => {
+    setSelectedGenre(genre);
+    if (genre) {
+      // Auto-search when genre is selected
+      setSearched(true);
+      setLoading(true);
+      setError('');
+      
+      fetch(`/api/tv/genre?genre=${encodeURIComponent(genre)}&limit=20`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setShows(data.shows || []);
+          } else {
+            setError(data.error || 'Failed to search TV shows');
+            setShows([]);
+            setSortedShows([]);
+          }
+        })
+        .catch(err => {
+          console.error('Genre search error:', err);
+          setError('An error occurred while searching');
+          setShows([]);
+          setSortedShows([]);
+        })
+        .finally(() => setLoading(false));
     }
   };
 
@@ -120,25 +171,76 @@ export default function TvShowsPage() {
           <p className="text-lg text-sky-700 font-medium">Search and discover TV shows</p>
         </div>
 
+        {/* Search Mode Toggle */}
+        <div className="mb-4 flex gap-4">
+          <button
+            onClick={() => {
+              setSearchMode('title');
+              setSearched(false);
+              setShows([]);
+              setSearchQuery('');
+            }}
+            className={`px-4 py-2 rounded-xl font-semibold transition-all ${
+              searchMode === 'title'
+                ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg'
+                : 'glass-strong text-sky-800 hover:bg-white/20'
+            }`}
+          >
+            Search by Title
+          </button>
+          <button
+            onClick={() => {
+              setSearchMode('genre');
+              setSearched(false);
+              setShows([]);
+              setSelectedGenre('');
+            }}
+            className={`px-4 py-2 rounded-xl font-semibold transition-all ${
+              searchMode === 'genre'
+                ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg'
+                : 'glass-strong text-sky-800 hover:bg-white/20'
+            }`}
+          >
+            Search by Genre
+          </button>
+        </div>
+
         {/* Search Bar */}
-        <form onSubmit={handleSearch} className="mb-8">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for TV shows..."
-              className="flex-1 px-4 py-3 glass-strong rounded-2xl text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 text-lg transition-all"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-2xl transition-all shadow-lg hover:shadow-xl glow-soft disabled:opacity-50 disabled:cursor-not-allowed"
+        {searchMode === 'title' ? (
+          <form onSubmit={handleSearch} className="mb-8">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for TV shows..."
+                className="flex-1 px-4 py-3 glass-strong rounded-2xl text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 text-lg transition-all"
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-2xl transition-all shadow-lg hover:shadow-xl glow-soft disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Searching...' : 'Search'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mb-8">
+            <select
+              value={selectedGenre}
+              onChange={(e) => handleGenreChange(e.target.value)}
+              className="w-full px-4 py-3 glass-strong rounded-2xl text-sky-900 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 text-lg transition-all"
             >
-              {loading ? 'Searching...' : 'Search'}
-            </button>
+              <option value="">Select a genre...</option>
+              {TV_GENRES.map((genre) => (
+                <option key={genre} value={genre}>
+                  {genre}
+                </option>
+              ))}
+            </select>
           </div>
-        </form>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -174,26 +276,31 @@ export default function TvShowsPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {sortedShows.map((show, index) => (
-                    <div
+                    <MediaStatusHover
                       key={`${show.imdbID}-${index}`}
-                      className="group glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105"
+                      mediaId={show.imdbID}
+                      mediaType="tv"
+                      mediaTitle={show.Title}
+                      currentStatus={null}
                     >
-                      <a href={`/tv/${show.imdbID}`}>
-                        <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 overflow-hidden rounded-t-2xl">
-                          <img
-                            src={show.Poster && show.Poster !== 'N/A' ? show.Poster : getDefaultPoster()}
-                            alt={show.Title}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          />
-                        </div>
-                        <div className="p-4">
-                          <h3 className="font-semibold text-sky-800 mb-1 line-clamp-2 group-hover:text-cyan-600 transition-colors">
-                            {show.Title}
-                          </h3>
-                          <p className="text-sm text-sky-600 mb-2">{show.Year}</p>
-                        </div>
-                      </a>
-                    </div>
+                      <div className="group glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105 relative">
+                        <Link href={`/tv/${show.imdbID}`}>
+                          <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 overflow-hidden rounded-t-2xl">
+                            <img
+                              src={show.Poster && show.Poster !== 'N/A' ? show.Poster : getDefaultPoster()}
+                              alt={show.Title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            />
+                          </div>
+                          <div className="p-4">
+                            <h3 className="font-semibold text-sky-800 mb-1 line-clamp-2 group-hover:text-cyan-600 transition-colors">
+                              {show.Title}
+                            </h3>
+                            <p className="text-sm text-sky-600 mb-2">{show.Year}</p>
+                          </div>
+                        </Link>
+                      </div>
+                    </MediaStatusHover>
                   ))}
                 </div>
               </>
@@ -205,24 +312,19 @@ export default function TvShowsPage() {
           </div>
         )}
 
-        {/* Featured TV Shows - Show when no search */}
+        {/* Trending TV Shows - Show when no search */}
         {!searched && !loading && (
           <div>
-            <h2 className="text-2xl font-semibold mb-4 text-sky-800">Featured TV Shows</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {['Breaking Bad', 'Game of Thrones', 'The Office', 'Stranger Things'].map((title) => (
-                <div
-                  key={title}
-                  className="glass-strong rounded-2xl overflow-hidden animate-pulse"
-                >
-                  <div className="aspect-[2/3] bg-gradient-to-br from-cyan-200 to-teal-200" />
-                  <div className="p-4">
-                    <div className="h-4 bg-sky-300/50 rounded mb-2" />
-                    <div className="h-4 bg-sky-300/50 rounded w-2/3" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <TrendingMediaScroll
+              mediaType="tv"
+              apiEndpoint="/api/tv/popular?limit=20"
+              getPosterUrl={(item) => item.Poster}
+              getTitle={(item) => item.Title}
+              getYear={(item) => item.Year}
+              getMediaId={(item) => item.imdbID}
+              getDetailUrl={(item) => `/tv/${item.imdbID}`}
+              aspectRatio="aspect-[2/3]"
+            />
             <p className="text-center text-sky-700 mt-8 font-medium">
               Search for your favorite TV shows above!
             </p>

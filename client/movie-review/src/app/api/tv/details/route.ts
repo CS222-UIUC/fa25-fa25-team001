@@ -1,15 +1,15 @@
 /**
  * ============================================================================
- * ROUTE: Movie Details API (OMDB)
+ * ROUTE: TV Show Details API (OMDB)
  * ============================================================================
  * 
- * Endpoint: GET /api/movies/details
- * Purpose: Fetch movie details (poster, year) from OMDB by titles
+ * Endpoint: GET /api/tv/details
+ * Purpose: Fetch TV show details (poster, year) from OMDB by titles
  * 
  * Query Parameters:
- *   - titles (required): Comma-separated list of movie titles
+ *   - titles (required): Comma-separated list of TV show titles
  * 
- * Returns: { success: true, movies: [...] }
+ * Returns: { success: true, shows: [...] }
  * 
  * ============================================================================
  */
@@ -19,16 +19,16 @@ import { getMovieById, searchMovies } from '@/lib/api/omdb';
 
 const OMDB_API_KEY = process.env.OMDB_API_KEY || '';
 
-async function getMovieDetails(title: string): Promise<{ title: string; poster?: string; year?: number } | null> {
+async function getTvShowDetails(title: string): Promise<{ title: string; poster?: string; year?: number } | null> {
   try {
-    // Search for the movie
+    // Search for the TV show
     const searchResults = await searchMovies(title, 1);
     
-    // Find the first result that matches the title (case-insensitive) and is type "movie"
+    // Find the first result that matches the title (case-insensitive) and is type "series"
     const match = searchResults.Search?.find(
-      (item) => item.Type === 'movie' && item.Title.toLowerCase() === title.toLowerCase()
+      (item) => item.Type === 'series' && item.Title.toLowerCase() === title.toLowerCase()
     ) || searchResults.Search?.find(
-      (item) => item.Type === 'movie'
+      (item) => item.Type === 'series'
     );
 
     if (!match) {
@@ -52,7 +52,7 @@ async function getMovieDetails(title: string): Promise<{ title: string; poster?:
       };
     }
   } catch (error) {
-    console.error(`Error fetching movie details for "${title}":`, error);
+    console.error(`Error fetching TV show details for "${title}":`, error);
     return null;
   }
 }
@@ -69,20 +69,20 @@ export async function GET(request: NextRequest) {
     const titles = titlesParam.split(',').map(t => t.trim()).filter(t => t);
     
     if (titles.length === 0) {
-      return NextResponse.json({ success: true, movies: [] });
+      return NextResponse.json({ success: true, shows: [] });
     }
 
     // Fetch details for all titles in parallel
-    const movieDetails = await Promise.all(
-      titles.map(title => getMovieDetails(title))
+    const showDetails = await Promise.all(
+      titles.map(title => getTvShowDetails(title))
     );
 
     // Create a map of title -> details
-    const moviesMap: Record<string, { poster?: string; year?: number }> = {};
+    const showsMap: Record<string, { poster?: string; year?: number }> = {};
     titles.forEach((title, index) => {
-      const details = movieDetails[index];
+      const details = showDetails[index];
       if (details) {
-        moviesMap[title] = {
+        showsMap[title] = {
           poster: details.poster,
           year: details.year,
         };
@@ -91,16 +91,17 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      movies: moviesMap,
+      shows: showsMap,
     });
   } catch (error: any) {
-    console.error('Error fetching movie details:', error);
+    console.error('Error fetching TV show details:', error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch movie details',
+        error: error.message || 'Failed to fetch TV show details',
       },
       { status: 500 }
     );
   }
 }
+

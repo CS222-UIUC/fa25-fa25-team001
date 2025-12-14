@@ -172,3 +172,108 @@ export async function getPopularMovies(limit: number = 20) {
   return uniqueMovies;
 }
 
+/**
+ * Search movies by genre
+ */
+export async function searchMoviesByGenre(genre: string, limit: number = 20) {
+  if (!OMDB_API_KEY) {
+    throw new Error('OMDB API key not configured');
+  }
+
+  const allMovies: Array<{
+    Title: string;
+    Year: string;
+    imdbID: string;
+    Type: string;
+    Poster: string;
+  }> = [];
+
+  try {
+    // Search for the genre term
+    const result = await searchMovies(genre, 1);
+    if (result.Search) {
+      const moviesWithPosters = result.Search.filter(
+        m => m.Type === 'movie' && m.Poster && m.Poster !== 'N/A'
+      );
+      allMovies.push(...moviesWithPosters);
+    }
+
+    // Try a second page if we need more results
+    if (allMovies.length < limit && parseInt(result.totalResults) > 10) {
+      try {
+        const result2 = await searchMovies(genre, 2);
+        if (result2.Search) {
+          const moviesWithPosters = result2.Search.filter(
+            m => m.Type === 'movie' && m.Poster && m.Poster !== 'N/A'
+          );
+          allMovies.push(...moviesWithPosters);
+        }
+      } catch (err) {
+        // Continue if second page fails
+      }
+    }
+  } catch (error) {
+    console.error('Error searching movies by genre:', error);
+    throw error;
+  }
+
+  // Remove duplicates and limit
+  const uniqueMovies = Array.from(
+    new Map(allMovies.map(m => [m.imdbID, m])).values()
+  ).slice(0, limit);
+
+  return uniqueMovies;
+}
+
+/**
+ * Search TV shows by genre
+ */
+export async function searchTvShowsByGenre(genre: string, limit: number = 20) {
+  if (!OMDB_API_KEY) {
+    throw new Error('OMDB API key not configured');
+  }
+
+  const allShows: Array<{
+    Title: string;
+    Year: string;
+    imdbID: string;
+    Type: string;
+    Poster: string;
+  }> = [];
+
+  try {
+    // Search for the genre term
+    const result = await searchMovies(genre, 1);
+    if (result.Search) {
+      const showsWithPosters = result.Search.filter(
+        s => s.Type === 'series' && s.Poster && s.Poster !== 'N/A'
+      );
+      allShows.push(...showsWithPosters);
+    }
+
+    // Try a second page if we need more results
+    if (allShows.length < limit && parseInt(result.totalResults) > 10) {
+      try {
+        const result2 = await searchMovies(genre, 2);
+        if (result2.Search) {
+          const showsWithPosters = result2.Search.filter(
+            s => s.Type === 'series' && s.Poster && s.Poster !== 'N/A'
+          );
+          allShows.push(...showsWithPosters);
+        }
+      } catch (err) {
+        // Continue if second page fails
+      }
+    }
+  } catch (error) {
+    console.error('Error searching TV shows by genre:', error);
+    throw error;
+  }
+
+  // Remove duplicates and limit
+  const uniqueShows = Array.from(
+    new Map(allShows.map(s => [s.imdbID, s])).values()
+  ).slice(0, limit);
+
+  return uniqueShows;
+}

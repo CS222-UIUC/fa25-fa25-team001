@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getUserProfile, updateUserProfile } from "@/actions/user";
 import { uploadProfilePicture } from "@/actions/upload";
+import { getMediaCounts } from "@/actions/media";
 import PlatformConnections from "@/components/PlatformConnections";
 import FavoritesSection from "@/components/FavoritesSection";
 import RecentGamesSection from "@/components/RecentGamesSection";
@@ -19,6 +20,7 @@ export default function Profile() {
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [mediaCounts, setMediaCounts] = useState({ movies: 0, tvShows: 0, games: 0 });
 
   // Load latest profile data from server on mount
   useEffect(() => {
@@ -35,6 +37,35 @@ export default function Profile() {
     };
     loadProfile();
   }, []);
+
+  // Load media counts
+  useEffect(() => {
+    const loadMediaCounts = async () => {
+      const res = await getMediaCounts();
+      if (!(res as any)?.error && (res as any).movies !== undefined) {
+        setMediaCounts({
+          movies: (res as any).movies || 0,
+          tvShows: (res as any).tvShows || 0,
+          games: (res as any).games || 0,
+        });
+      }
+    };
+
+    if (session) {
+      loadMediaCounts();
+    }
+
+    // Listen for media status updates to refresh counts
+    const handleMediaStatusUpdate = () => {
+      console.log('Media status updated event received, refreshing counts...');
+      loadMediaCounts();
+    };
+
+    window.addEventListener('mediaStatusUpdated', handleMediaStatusUpdate);
+    return () => {
+      window.removeEventListener('mediaStatusUpdated', handleMediaStatusUpdate);
+    };
+  }, [session]);
 
   if (!session) {
     return (
@@ -232,6 +263,49 @@ export default function Profile() {
               ) : (
                 <p className="text-sky-800 font-medium">{profileData.email}</p>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Media Counts Section */}
+        <div className="mt-8">
+          <div className="glass-strong rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-semibold text-sky-800">Your Media Stats</h2>
+              <button
+                onClick={async () => {
+                  const res = await getMediaCounts();
+                  if (!(res as any)?.error && (res as any).movies !== undefined) {
+                    setMediaCounts({
+                      movies: (res as any).movies || 0,
+                      tvShows: (res as any).tvShows || 0,
+                      games: (res as any).games || 0,
+                    });
+                  }
+                }}
+                className="text-sm bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold py-2 px-4 rounded-xl transition-all shadow-lg hover:shadow-xl"
+              >
+                Refresh
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {/* Movies Count */}
+              <Link href="/user/profile/movies" className="bg-gradient-to-br from-red-100 to-red-200 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all transform hover:scale-105 cursor-pointer">
+                <div className="text-4xl font-bold text-red-700 mb-2">{mediaCounts.movies}</div>
+                <div className="text-lg font-semibold text-red-800">Movies Watched</div>
+              </Link>
+              
+              {/* TV Shows Count */}
+              <Link href="/user/profile/tv" className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all transform hover:scale-105 cursor-pointer">
+                <div className="text-4xl font-bold text-purple-700 mb-2">{mediaCounts.tvShows}</div>
+                <div className="text-lg font-semibold text-purple-800">TV Shows Watched</div>
+              </Link>
+              
+              {/* Games Count */}
+              <Link href="/user/profile/games" className="bg-gradient-to-br from-green-100 to-green-200 rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all transform hover:scale-105 cursor-pointer">
+                <div className="text-4xl font-bold text-green-700 mb-2">{mediaCounts.games}</div>
+                <div className="text-lg font-semibold text-green-800">Games Played</div>
+              </Link>
             </div>
           </div>
         </div>

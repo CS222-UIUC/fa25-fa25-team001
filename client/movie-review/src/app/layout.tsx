@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import Providers from "@/components/SessionProvider";
+import GoogleSignInMeta from "@/components/GoogleSignInMeta";
 import "./globals.css";
 import Header from "../components/Header";
 
@@ -30,6 +32,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <GoogleSignInMeta />
+        <Script
+          src="https://apis.google.com/js/platform.js"
+          strategy="afterInteractive"
+          async
+          defer
+        />
         {children}
       </body>
       </Providers>

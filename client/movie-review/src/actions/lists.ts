@@ -28,7 +28,6 @@ export async function getMyLists() {
       id: list.id,
       title: list.title,
       description: list.description,
-      mediaType: list.mediaType,
       isPublic: list.isPublic,
       itemCount: list._count.items,
       createdAt: list.createdAt,
@@ -47,6 +46,17 @@ export async function getList(listId: string) {
     include: {
       items: {
         orderBy: { position: 'asc' },
+        include: {
+          movie: {
+            select: { id: true, title: true, releaseYear: true },
+          },
+          videoGame: {
+            select: { id: true, title: true, releaseYear: true },
+          },
+          tvShow: {
+            select: { id: true, title: true, releaseYear: true },
+          },
+        },
       },
       user: {
         select: { id: true, username: true },
@@ -64,69 +74,170 @@ export async function getList(listId: string) {
       id: list.id,
       title: list.title,
       description: list.description,
-      mediaType: list.mediaType,
       isPublic: list.isPublic,
       createdAt: list.createdAt,
       updatedAt: list.updatedAt,
       user: list.user,
-      items: list.items.map(item => ({
-        id: item.id,
-        position: item.position,
-        notes: item.notes,
-        itemName: item.itemName,
-        itemCover: item.itemCover,
-        itemYear: item.itemYear,
-        itemType: item.itemType,
-        externalGameId: item.externalGameId,
-        externalMovieId: item.externalMovieId,
-        externalTvShowId: item.externalTvShowId,
-      })),
+      items: list.items.map(item => {
+        // Determine item type and get the media record
+        let itemType: 'game' | 'movie' | 'tv' | null = null;
+        let mediaId: string | null = null;
+        let title: string | null = null;
+        let year: number | null = null;
+
+        if (item.videoGame) {
+          itemType = 'game';
+          mediaId = item.videoGame.id;
+          title = item.videoGame.title;
+          year = item.videoGame.releaseYear;
+        } else if (item.movie) {
+          itemType = 'movie';
+          mediaId = item.movie.id;
+          title = item.movie.title;
+          year = item.movie.releaseYear;
+        } else if (item.tvShow) {
+          itemType = 'tv';
+          mediaId = item.tvShow.id;
+          title = item.tvShow.title;
+          year = item.tvShow.releaseYear;
+        }
+
+        return {
+          id: item.id,
+          position: item.position,
+          notes: item.notes,
+          itemType,
+          mediaId,
+          title,
+          year,
+        };
+      }),
     },
   } as const;
 }
 
 // Create a new list
-export async function createList(input: { title: string; description?: string; mediaType?: string; isPublic?: boolean }) {
+export async function createList(input: { 
+  title: string; 
+  description?: string; 
+  mediaType?: string; 
+  isPublic?: boolean;
+  items?: Array<{
+    itemType: 'game' | 'movie' | 'tv';
+    externalId: string;
+    itemName: string;
+    itemCover?: string;
+    itemYear?: number;
+  }>;
+}) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: 'Unauthorized' } as const;
 
-  const { title, description, mediaType, isPublic = true } = input;
+  const { title, description, mediaType, isPublic = true, items = [] } = input;
   if (!title.trim()) return { error: 'Title is required' } as const;
 
-  // Validate mediaType if provided
+  // Validate mediaType if provided (though we don't store it in the schema)
   if (mediaType && !['game', 'movie', 'tv'].includes(mediaType)) {
     return { error: 'mediaType must be game, movie, or tv' } as const;
   }
 
   try {
-    console.log('Creating list in database:', {
-      userId: session.user.id,
-      title: title.trim(),
-      description: description?.trim() || null,
-      mediaType: mediaType || null,
-      isPublic,
+    // Create the list with items in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the list
+      const list = await tx.list.create({
+        data: {
+          userId: session.user.id,
+          title: title.trim(),
+          description: description?.trim() || null,
+          isPublic,
+        },
+      });
+
+      // Create items if provided
+      if (items.length > 0) {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          let mediaId: string | null = null;
+
+          // Find or create the media record
+          if (item.itemType === 'game') {
+            // For games, try to find by ID (IGDB ID stored as string)
+            let game = await tx.videoGame.findFirst({
+              where: { id: item.externalId },
+            });
+            
+            if (!game) {
+              // Create new game record
+              game = await tx.videoGame.create({
+                data: {
+                  id: item.externalId,
+                  title: item.itemName,
+                  releaseYear: item.itemYear || undefined,
+                },
+              });
+            }
+            mediaId = game.id;
+          } else if (item.itemType === 'movie') {
+            // For movies, try to find by title or create
+            let movie = await tx.movie.findFirst({
+              where: { title: item.itemName },
+            });
+            
+            if (!movie) {
+              movie = await tx.movie.create({
+                data: {
+                  title: item.itemName,
+                  releaseYear: item.itemYear || undefined,
+                },
+              });
+            }
+            mediaId = movie.id;
+          } else if (item.itemType === 'tv') {
+            // For TV shows, try to find by title or create
+            let tvShow = await tx.tvShow.findFirst({
+              where: { title: item.itemName },
+            });
+            
+            if (!tvShow) {
+              tvShow = await tx.tvShow.create({
+                data: {
+                  title: item.itemName,
+                  releaseYear: item.itemYear || undefined,
+                },
+              });
+            }
+            mediaId = tvShow.id;
+          }
+
+          if (mediaId) {
+            // Create the list item
+            await tx.listItem.create({
+              data: {
+                listId: list.id,
+                position: i + 1,
+                ...(item.itemType === 'game' && { videoGameId: mediaId }),
+                ...(item.itemType === 'movie' && { movieId: mediaId }),
+                ...(item.itemType === 'tv' && { tvShowId: mediaId }),
+              },
+            });
+          }
+        }
+      }
+
+      return list;
     });
 
-    const list = await prisma.list.create({
-      data: {
-        userId: session.user.id,
-        title: title.trim(),
-        description: description?.trim() || null,
-        mediaType: mediaType || null,
-        isPublic,
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        mediaType: true,
-        isPublic: true,
-        createdAt: true,
-      },
-    });
-
-    console.log('List created successfully:', list);
-    return { success: true, list } as const;
+    return { 
+      success: true, 
+      list: {
+        id: result.id,
+        title: result.title,
+        description: result.description,
+        isPublic: result.isPublic,
+        createdAt: result.createdAt,
+      }
+    } as const;
   } catch (error) {
     console.error('Error creating list:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -137,7 +248,7 @@ export async function createList(input: { title: string; description?: string; m
 // Update a list
 export async function updateList(
   listId: string,
-  input: { title?: string; description?: string; mediaType?: string; isPublic?: boolean }
+  input: { title?: string; description?: string; isPublic?: boolean }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: 'Unauthorized' } as const;
@@ -150,25 +261,18 @@ export async function updateList(
   if (!list) return { error: 'List not found' } as const;
   if (list.userId !== session.user.id) return { error: 'Forbidden' } as const;
 
-  // Validate mediaType if provided
-  if (input.mediaType && !['game', 'movie', 'tv'].includes(input.mediaType)) {
-    return { error: 'mediaType must be game, movie, or tv' } as const;
-  }
-
   try {
     const updated = await prisma.list.update({
       where: { id: listId },
       data: {
         ...(input.title !== undefined && { title: input.title.trim() }),
         ...(input.description !== undefined && { description: input.description.trim() || null }),
-        ...(input.mediaType !== undefined && { mediaType: input.mediaType || null }),
         ...(input.isPublic !== undefined && { isPublic: input.isPublic }),
       },
       select: {
         id: true,
         title: true,
         description: true,
-        mediaType: true,
         isPublic: true,
         updatedAt: true,
       },
@@ -226,38 +330,91 @@ export async function addItemToList(
   if (!list) return { error: 'List not found' } as const;
   if (list.userId !== session.user.id) return { error: 'Forbidden' } as const;
 
-  const { itemType, externalId, itemName, itemCover, itemYear, notes } = input;
-
-  // Get current max position
-  const maxPosition = await prisma.listItem.findFirst({
-    where: { listId },
-    orderBy: { position: 'desc' },
-    select: { position: true },
-  });
-
-  const newPosition = (maxPosition?.position || 0) + 1;
+  const { itemType, externalId, itemName, itemYear, notes } = input;
 
   try {
+    // Create or find the media record, similar to createList
+    let mediaId: string | null = null;
+
+    if (itemType === 'game') {
+      // For games, try to find by ID (IGDB ID stored as string)
+      let game = await prisma.videoGame.findFirst({
+        where: { id: externalId },
+      });
+      
+      if (!game) {
+        // Create new game record
+        game = await prisma.videoGame.create({
+          data: {
+            id: externalId,
+            title: itemName,
+            releaseYear: itemYear || undefined,
+          },
+        });
+      }
+      mediaId = game.id;
+    } else if (itemType === 'movie') {
+      // For movies, try to find by title or create
+      let movie = await prisma.movie.findFirst({
+        where: { title: itemName },
+      });
+      
+      if (!movie) {
+        movie = await prisma.movie.create({
+          data: {
+            title: itemName,
+            releaseYear: itemYear || undefined,
+          },
+        });
+      }
+      mediaId = movie.id;
+    } else if (itemType === 'tv') {
+      // For TV shows, try to find by title or create
+      let tvShow = await prisma.tvShow.findFirst({
+        where: { title: itemName },
+      });
+      
+      if (!tvShow) {
+        tvShow = await prisma.tvShow.create({
+          data: {
+            title: itemName,
+            releaseYear: itemYear || undefined,
+          },
+        });
+      }
+      mediaId = tvShow.id;
+    }
+
+    if (!mediaId) {
+      return { error: 'Failed to create or find media record' } as const;
+    }
+
+    // Get current max position
+    const maxPosition = await prisma.listItem.findFirst({
+      where: { listId },
+      orderBy: { position: 'desc' },
+      select: { position: true },
+    });
+
+    const newPosition = (maxPosition?.position || 0) + 1;
+
+    // Create the list item
     const item = await prisma.listItem.create({
       data: {
         listId,
         position: newPosition,
-        itemType,
-        itemName,
-        itemCover: itemCover || null,
-        itemYear: itemYear || null,
         notes: notes?.trim() || null,
-        ...(itemType === 'game' && { externalGameId: externalId }),
-        ...(itemType === 'movie' && { externalMovieId: externalId }),
-        ...(itemType === 'tv' && { externalTvShowId: externalId }),
+        ...(itemType === 'game' && { videoGameId: mediaId }),
+        ...(itemType === 'movie' && { movieId: mediaId }),
+        ...(itemType === 'tv' && { tvShowId: mediaId }),
       },
       select: {
         id: true,
         position: true,
-        itemName: true,
-        itemCover: true,
-        itemYear: true,
-        itemType: true,
+        notes: true,
+        movieId: true,
+        videoGameId: true,
+        tvShowId: true,
       },
     });
 

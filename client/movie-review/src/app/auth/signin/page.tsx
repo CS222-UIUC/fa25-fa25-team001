@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import GoogleSignIn from '@/components/GoogleSignIn';
 
 export default function SignIn() {
   const [error, setError] = useState('');
@@ -156,6 +157,45 @@ export default function SignIn() {
             </p>
           </div>
         </form>
+
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-sky-300/50"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white/50 text-sky-700 font-medium">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <GoogleSignIn
+              onSuccess={async (profile) => {
+                try {
+                  setError('');
+                  setLoading(true);
+                  
+                  // Sign in with NextAuth using Google credentials
+                  const result = await signIn('google', {
+                    idToken: profile.idToken,
+                    redirect: false,
+                  });
+
+                  if (result?.error) {
+                    setError('Google sign-in failed. Please try again.');
+                  } else {
+                    router.push('/dashboard');
+                  }
+                } catch (err) {
+                  console.error('Google sign-in error:', err);
+                  setError('An error occurred during Google sign-in.');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            />
+          </div>
+        </div>
         </div>
       </div>
     </div>

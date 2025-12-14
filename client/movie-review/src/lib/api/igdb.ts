@@ -152,3 +152,33 @@ export async function getPopularGames(limit: number = 20) {
   return igdbRequest('/games', body);
 }
 
+/**
+ * Search games by genre
+ */
+export async function searchGamesByGenre(genreName: string, limit: number = 20) {
+  // First, get the genre ID
+  const genreBody = `
+    fields id,name;
+    where name = "${genreName}";
+    limit 1;
+  `.trim();
+
+  const genres = await igdbRequest<{ id: number; name: string }>('/genres', genreBody);
+  
+  if (genres.length === 0) {
+    throw new Error(`Genre "${genreName}" not found`);
+  }
+
+  const genreId = genres[0].id;
+
+  // Now search for games with this genre, sorted by rating
+  const gamesBody = `
+    fields id,name,slug,summary,genres.name,platforms.name,platforms.id,rating,cover.image_id,first_release_date;
+    where genres = ${genreId} & rating > 0 & cover != null;
+    sort rating desc;
+    limit ${limit};
+  `.trim();
+
+  return igdbRequest('/games', gamesBody);
+}
+

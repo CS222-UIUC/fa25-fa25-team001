@@ -27,16 +27,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Query parameter required' }, { status: 400 });
     }
 
-    const data = await searchMovies(query, page);
+    try {
+      const data = await searchMovies(query, page);
+      
+      // Filter to only return movies (type='movie')
+      const moviesOnly = (data.Search || []).filter((item: any) => item.Type === 'movie');
 
-    return NextResponse.json({ 
-      success: true, 
-      movies: data.Search,
-      totalResults: parseInt(data.totalResults),
-      page 
-    });
+      return NextResponse.json({ 
+        success: true, 
+        movies: moviesOnly,
+        totalResults: moviesOnly.length,
+        page 
+      });
+    } catch (omdbError: any) {
+      // Handle "no results" as a valid response, not an error
+      if (omdbError?.message?.includes('not found') || omdbError?.message?.includes('Movie not found')) {
+        return NextResponse.json({ 
+          success: true, 
+          movies: [],
+          totalResults: 0,
+          page 
+        });
+      }
+      
+      // For API key errors, return empty results instead of error
+      if (omdbError?.message?.includes('API key not configured')) {
+        return NextResponse.json({ 
+          success: true, 
+          movies: [],
+          totalResults: 0,
+          page 
+        });
+      }
+      
+      throw omdbError;
+    }
   } catch (error: any) {
-    console.error('OMDB search error:', error);
+    console.error('Movie search error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to search movies' },
       { status: 500 }

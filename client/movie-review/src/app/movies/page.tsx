@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import MediaStatusHover from '@/components/MediaStatusHover';
+import TrendingMediaScroll from '@/components/TrendingMediaScroll';
+import Link from 'next/link';
 
 interface Movie {
   Title: string;
@@ -40,8 +43,16 @@ const sortMovies = (moviesToSort: Movie[], sortOption: SortOption): Movie[] => {
   }
 };
 
+const MOVIE_GENRES = [
+  'Action', 'Adventure', 'Animation', 'Biography', 'Comedy', 'Crime', 'Documentary',
+  'Drama', 'Family', 'Fantasy', 'Film-Noir', 'History', 'Horror', 'Music', 'Musical',
+  'Mystery', 'Romance', 'Sci-Fi', 'Sport', 'Thriller', 'War', 'Western'
+];
+
 export default function MoviesPage() {
+  const [searchMode, setSearchMode] = useState<'title' | 'genre'>('title');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState('');
   const [movies, setMovies] = useState<Movie[]>([]);
   const [sortedMovies, setSortedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
@@ -52,8 +63,13 @@ export default function MoviesPage() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!searchQuery.trim()) {
+    if (searchMode === 'title' && !searchQuery.trim()) {
       setError('Please enter a search query');
+      return;
+    }
+
+    if (searchMode === 'genre' && !selectedGenre) {
+      setError('Please select a genre');
       return;
     }
 
@@ -62,7 +78,13 @@ export default function MoviesPage() {
     setSearched(true);
 
     try {
-      const response = await fetch(`/api/movies/search?q=${encodeURIComponent(searchQuery)}`);
+      let response;
+      if (searchMode === 'genre') {
+        response = await fetch(`/api/movies/genre?genre=${encodeURIComponent(selectedGenre)}&limit=20`);
+      } else {
+        response = await fetch(`/api/movies/search?q=${encodeURIComponent(searchQuery)}`);
+      }
+      
       const data = await response.json();
 
       if (data.success) {
@@ -81,6 +103,35 @@ export default function MoviesPage() {
       setSortedMovies([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenreChange = (genre: string) => {
+    setSelectedGenre(genre);
+    if (genre) {
+      // Auto-search when genre is selected
+      setSearched(true);
+      setLoading(true);
+      setError('');
+      
+      fetch(`/api/movies/genre?genre=${encodeURIComponent(genre)}&limit=20`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setMovies(data.movies || []);
+          } else {
+            setError(data.error || 'Failed to search movies');
+            setMovies([]);
+            setSortedMovies([]);
+          }
+        })
+        .catch(err => {
+          console.error('Genre search error:', err);
+          setError('An error occurred while searching');
+          setMovies([]);
+          setSortedMovies([]);
+        })
+        .finally(() => setLoading(false));
     }
   };
 
@@ -106,25 +157,76 @@ export default function MoviesPage() {
           <p className="text-lg text-sky-700 font-medium">Search and discover movies</p>
         </div>
 
+        {/* Search Mode Toggle */}
+        <div className="mb-4 flex gap-4">
+          <button
+            onClick={() => {
+              setSearchMode('title');
+              setSearched(false);
+              setMovies([]);
+              setSearchQuery('');
+            }}
+            className={`px-4 py-2 rounded-xl font-semibold transition-all ${
+              searchMode === 'title'
+                ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg'
+                : 'glass-strong text-sky-800 hover:bg-white/20'
+            }`}
+          >
+            Search by Title
+          </button>
+          <button
+            onClick={() => {
+              setSearchMode('genre');
+              setSearched(false);
+              setMovies([]);
+              setSelectedGenre('');
+            }}
+            className={`px-4 py-2 rounded-xl font-semibold transition-all ${
+              searchMode === 'genre'
+                ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg'
+                : 'glass-strong text-sky-800 hover:bg-white/20'
+            }`}
+          >
+            Search by Genre
+          </button>
+        </div>
+
         {/* Search Bar */}
-        <form onSubmit={handleSearch} className="mb-8">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for movies..."
-              className="flex-1 px-4 py-3 glass-strong rounded-2xl text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 text-lg transition-all"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-2xl transition-all shadow-lg hover:shadow-xl glow-soft disabled:opacity-50 disabled:cursor-not-allowed"
+        {searchMode === 'title' ? (
+          <form onSubmit={handleSearch} className="mb-8">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for movies..."
+                className="flex-1 px-4 py-3 glass-strong rounded-2xl text-sky-900 placeholder-sky-600/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 text-lg transition-all"
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-2xl transition-all shadow-lg hover:shadow-xl glow-soft disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Searching...' : 'Search'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mb-8">
+            <select
+              value={selectedGenre}
+              onChange={(e) => handleGenreChange(e.target.value)}
+              className="w-full px-4 py-3 glass-strong rounded-2xl text-sky-900 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-300 text-lg transition-all"
             >
-              {loading ? 'Searching...' : 'Search'}
-            </button>
+              <option value="">Select a genre...</option>
+              {MOVIE_GENRES.map((genre) => (
+                <option key={genre} value={genre}>
+                  {genre}
+                </option>
+              ))}
+            </select>
           </div>
-        </form>
+        )}
 
         {/* Error Message */}
         {error && (
@@ -160,25 +262,31 @@ export default function MoviesPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {sortedMovies.map((movie, index) => (
-                    <a
+                    <MediaStatusHover
                       key={`${movie.imdbID}-${index}`}
-                      href={`/movies/${movie.imdbID}`}
-                      className="group glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105"
+                      mediaId={movie.imdbID}
+                      mediaType="movie"
+                      mediaTitle={movie.Title}
+                      currentStatus={null}
                     >
-                      <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 overflow-hidden rounded-t-2xl">
-                        <img
-                          src={movie.Poster && movie.Poster !== 'N/A' ? movie.Poster : getDefaultPoster()}
-                          alt={movie.Title}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
+                      <div className="group glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105 relative">
+                        <Link href={`/movies/${movie.imdbID}`}>
+                          <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 overflow-hidden rounded-t-2xl">
+                            <img
+                              src={movie.Poster && movie.Poster !== 'N/A' ? movie.Poster : getDefaultPoster()}
+                              alt={movie.Title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            />
+                          </div>
+                          <div className="p-4">
+                            <h3 className="font-semibold text-sky-800 mb-1 line-clamp-2 group-hover:text-cyan-600 transition-colors">
+                              {movie.Title}
+                            </h3>
+                            <p className="text-sm text-sky-600">{movie.Year}</p>
+                          </div>
+                        </Link>
                       </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold text-sky-800 mb-1 line-clamp-2 group-hover:text-cyan-600 transition-colors">
-                          {movie.Title}
-                        </h3>
-                        <p className="text-sm text-sky-600">{movie.Year}</p>
-                      </div>
-                    </a>
+                    </MediaStatusHover>
                   ))}
                 </div>
               </>
@@ -190,24 +298,19 @@ export default function MoviesPage() {
           </div>
         )}
 
-        {/* Featured Movies - Show when no search */}
+        {/* Trending Movies - Show when no search */}
         {!searched && !loading && (
           <div>
-            <h2 className="text-2xl font-semibold mb-4 text-sky-800">Featured Movies</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {['The Matrix', 'Inception', 'Interstellar', 'The Dark Knight'].map((title) => (
-                <div
-                  key={title}
-                  className="glass-strong rounded-2xl overflow-hidden animate-pulse"
-                >
-                  <div className="aspect-[2/3] bg-gradient-to-br from-cyan-200 to-teal-200" />
-                  <div className="p-4">
-                    <div className="h-4 bg-sky-300/50 rounded mb-2" />
-                    <div className="h-4 bg-sky-300/50 rounded w-2/3" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <TrendingMediaScroll
+              mediaType="movie"
+              apiEndpoint="/api/movies/popular?limit=20"
+              getPosterUrl={(item) => item.Poster}
+              getTitle={(item) => item.Title}
+              getYear={(item) => item.Year}
+              getMediaId={(item) => item.imdbID}
+              getDetailUrl={(item) => `/movies/${item.imdbID}`}
+              aspectRatio="aspect-[2/3]"
+            />
             <p className="text-center text-sky-700 mt-8 font-medium">
               Search for your favorite movies above!
             </p>

@@ -15,147 +15,35 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/Header';
-import Image from 'next/image';
-import { getCoverImageUrl } from '@/lib/api/igdb';
-import { searchMovies } from '@/lib/api/omdb';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 interface ListItem {
   id: string;
   position: number;
   notes?: string;
-  itemName?: string;
-  itemCover?: string;
-  itemYear?: number;
-  itemType?: string;
-  externalGameId?: string;
-  externalMovieId?: string;
-  externalTvShowId?: string;
+  itemType: 'game' | 'movie' | 'tv' | null;
+  mediaId: string | null;
+  title: string | null;
+  year: number | null;
 }
 
 interface List {
   id: string;
   title: string;
   description?: string;
-  mediaType?: string;
   isPublic: boolean;
   items: ListItem[];
   user: { id: string; username: string };
 }
 
-// Sortable Item Component
-function SortableItem({ item, isOwner, onDelete, getItemLink, getRankingLabel }: {
-  item: ListItem;
-  isOwner: boolean;
-  onDelete: (id: string) => void;
-  getItemLink: (item: ListItem) => string;
-  getRankingLabel: (position: number) => string;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} className="glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all">
-      <Link href={getItemLink(item)}>
-        <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 overflow-hidden rounded-t-2xl relative">
-          {item.itemCover ? (
-            <img
-              src={item.itemCover}
-              alt={item.itemName || 'Item'}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-sky-600 font-medium">
-              No Cover
-            </div>
-          )}
-          <div className="absolute top-2 left-2 bg-gradient-to-r from-cyan-600 to-teal-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-lg">
-            {getRankingLabel(item.position)}
-          </div>
-          {/* Drag Handle */}
-          <div
-            {...attributes}
-            {...listeners}
-            className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all"
-            style={{ touchAction: 'none' }}
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 8h16M4 16h16"
-              />
-            </svg>
-          </div>
-        </div>
-        <div className="p-4">
-          <h3 className="font-semibold text-sky-800 mb-1 line-clamp-2">
-            {item.itemName || 'Untitled'}
-          </h3>
-          {item.itemYear && (
-            <p className="text-sm text-sky-600">{item.itemYear}</p>
-          )}
-          {item.notes && (
-            <p className="text-xs text-sky-500 mt-2 line-clamp-2">{item.notes}</p>
-          )}
-        </div>
-      </Link>
-      {isOwner && (
-        <div className="px-4 pb-4">
-          <button
-            onClick={() => onDelete(item.id)}
-            className="w-full px-3 py-1 bg-rose-500/20 text-rose-700 rounded-lg text-sm font-medium hover:bg-rose-500/30 transition-all"
-          >
-            Remove
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function ListDetailPage() {
   const { data: session } = useSession();
   const params = useParams();
-  const router = useRouter();
   const listId = params.id as string;
 
   const [list, setList] = useState<List | null>(null);
@@ -163,29 +51,20 @@ export default function ListDetailPage() {
   const [editing, setEditing] = useState(false);
   const [showAddItems, setShowAddItems] = useState(false);
   const [items, setItems] = useState<ListItem[]>([]);
+  const [itemDetails, setItemDetails] = useState<Record<string, { cover?: string; year?: number }>>({});
   const [editForm, setEditForm] = useState({
     title: '',
     description: '',
-    mediaType: '',
     isPublic: true,
   });
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  // Search state
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchTab, setSearchTab] = useState<'games' | 'movies' | 'tv'>('games');
+  const [searchLoading, setSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<{
-    games: Array<{ id: number; name: string; cover?: { image_id: string }; first_release_date?: number }>;
+    games: Array<{ id: number; name: string; cover?: string; releaseDate?: string }>;
     movies: Array<{ id: string; title: string; year: number; poster?: string }>;
     tvShows: Array<{ id: string; title: string; year: number; poster?: string }>;
   }>({ games: [], movies: [], tvShows: [] });
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchTab, setSearchTab] = useState<'games' | 'movies' | 'tv'>('games');
 
   useEffect(() => {
     if (session && listId) {
@@ -205,9 +84,91 @@ export default function ListDetailPage() {
         setEditForm({
           title: data.list.title,
           description: data.list.description || '',
-          mediaType: data.list.mediaType || '',
           isPublic: data.list.isPublic,
         });
+
+        // Fetch poster/cover images for items
+        if (sortedItems.length > 0) {
+          const gameIds: string[] = [];
+          const gameTitles: string[] = [];
+          const movieTitles: string[] = [];
+          const tvTitles: string[] = [];
+
+          sortedItems.forEach(item => {
+            if (item.itemType === 'game' && item.mediaId && !isNaN(Number(item.mediaId))) {
+              gameIds.push(item.mediaId);
+            } else if (item.itemType === 'game' && item.title) {
+              gameTitles.push(item.title);
+            } else if (item.itemType === 'movie' && item.title) {
+              movieTitles.push(item.title);
+            } else if (item.itemType === 'tv' && item.title) {
+              tvTitles.push(item.title);
+            }
+          });
+
+          const detailsMap: Record<string, { cover?: string; year?: number }> = {};
+
+          // Fetch game details
+          if (gameIds.length > 0 || gameTitles.length > 0) {
+            try {
+              const params = new URLSearchParams();
+              if (gameIds.length > 0) params.append('ids', gameIds.join(','));
+              if (gameTitles.length > 0) params.append('titles', gameTitles.join(','));
+              const gamesRes = await fetch(`/api/games/details?${params.toString()}`);
+              const gamesData = await gamesRes.json();
+              if (gamesData.success && gamesData.games) {
+                sortedItems.forEach(item => {
+                  if (item.itemType === 'game') {
+                    const byId = gamesData.games[item.mediaId || ''];
+                    const byTitle = gamesData.games[item.title || ''];
+                    const details = byId || byTitle;
+                    if (details) {
+                      detailsMap[item.id] = details;
+                    }
+                  }
+                });
+              }
+            } catch (error) {
+              console.error('Error fetching game details:', error);
+            }
+          }
+
+          // Fetch movie details
+          if (movieTitles.length > 0) {
+            try {
+              const moviesRes = await fetch(`/api/movies/details?titles=${encodeURIComponent(movieTitles.join(','))}`);
+              const moviesData = await moviesRes.json();
+              if (moviesData.success && moviesData.movies) {
+                sortedItems.forEach(item => {
+                  if (item.itemType === 'movie' && item.title && moviesData.movies[item.title]) {
+                    detailsMap[item.id] = moviesData.movies[item.title];
+                  }
+                });
+              }
+            } catch (error) {
+              console.error('Error fetching movie details:', error);
+            }
+          }
+
+          // Fetch TV show details
+          if (tvTitles.length > 0) {
+            try {
+              const tvRes = await fetch(`/api/tv/details?titles=${encodeURIComponent(tvTitles.join(','))}`);
+              const tvData = await tvRes.json();
+              if (tvData.success && tvData.shows) {
+                sortedItems.forEach(item => {
+                  if (item.itemType === 'tv' && item.title && tvData.shows[item.title]) {
+                    detailsMap[item.id] = tvData.shows[item.title];
+                  }
+                });
+              }
+            } catch (error) {
+              console.error('Error fetching TV show details:', error);
+            }
+          }
+
+          setItemDetails(detailsMap);
+        }
       }
     } catch (error) {
       console.error('Error loading list:', error);
@@ -228,6 +189,7 @@ export default function ListDetailPage() {
       if (data.success) {
         setList(data.list ? { ...list!, ...data.list } : list);
         setEditing(false);
+        loadList(); // Reload to refresh
       } else {
         alert(data.error || 'Failed to update list');
       }
@@ -259,7 +221,7 @@ export default function ListDetailPage() {
     }
   };
 
-  const performSearch = useCallback(async (searchTerm: string) => {
+  const performSearch = async (searchTerm: string) => {
     if (!searchTerm.trim()) {
       setSearchResults({ games: [], movies: [], tvShows: [] });
       return;
@@ -267,61 +229,86 @@ export default function ListDetailPage() {
 
     setSearchLoading(true);
     try {
-      // Search games via API route (server-side)
-      let gamesResults: Array<{ id: number; name: string; cover?: { image_id: string }; first_release_date?: number }> = [];
+      // Search games
+      let gamesResults: Array<{ id: number; name: string; cover?: string; releaseDate?: string }> = [];
       try {
         const gamesResponse = await fetch(`/api/games/search?q=${encodeURIComponent(searchTerm)}&limit=20`);
-        const gamesData = await gamesResponse.json();
-        if (gamesData.success && gamesData.games) {
-          gamesResults = gamesData.games;
+        if (gamesResponse.ok) {
+          const contentType = gamesResponse.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const gamesData = await gamesResponse.json();
+            if (gamesData.success && gamesData.games) {
+              gamesResults = gamesData.games;
+            }
+          }
         }
-      } catch (gameError) {
-        console.warn('Game search unavailable:', gameError instanceof Error ? gameError.message : 'Unknown error');
-        // Continue with movies/TV shows even if games fail
+      } catch (gameError: any) {
+        console.warn('Game search unavailable:', gameError?.message);
       }
       
-      // Search movies/TV shows
+      // Search movies
       let moviesList: Array<{ id: string; title: string; year: number; poster?: string }> = [];
-      let tvList: Array<{ id: string; title: string; year: number; poster?: string }> = [];
-      
       try {
-        const omdbResults = await searchMovies(searchTerm, 1);
-        const allResults = omdbResults.Search || [];
-        
-        allResults.forEach((item) => {
-          const entry = {
-            id: item.imdbID,
-            title: item.Title,
-            year: parseInt(item.Year) || 0,
-            poster: item.Poster !== 'N/A' ? item.Poster : undefined,
-          };
-          
-          if (item.Type === 'movie') {
-            moviesList.push(entry);
-          } else if (item.Type === 'series') {
-            tvList.push(entry);
+        const moviesResponse = await fetch(`/api/movies/search?q=${encodeURIComponent(searchTerm)}&limit=20`);
+        if (moviesResponse.ok) {
+          const contentType = moviesResponse.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const moviesData = await moviesResponse.json();
+            if (moviesData.success && moviesData.movies) {
+              moviesList = moviesData.movies.map((movie: any) => ({
+                id: movie.imdbID || movie.id,
+                title: movie.Title || movie.title,
+                year: parseInt(movie.Year || movie.year) || 0,
+                poster: (movie.Poster || movie.poster) && (movie.Poster || movie.poster) !== 'N/A' 
+                  ? (movie.Poster || movie.poster) 
+                  : undefined,
+              }));
+            }
           }
-        });
-      } catch (omdbError) {
-        console.error('OMDB search error:', omdbError);
+        }
+      } catch (movieError: any) {
+        console.warn('Movie search error:', movieError?.message || movieError);
+      }
+      
+      // Search TV shows
+      let tvList: Array<{ id: string; title: string; year: number; poster?: string }> = [];
+      try {
+        const tvResponse = await fetch(`/api/tv/search?q=${encodeURIComponent(searchTerm)}&limit=20`);
+        if (tvResponse.ok) {
+          const contentType = tvResponse.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const tvData = await tvResponse.json();
+            if (tvData.success && tvData.shows) {
+              tvList = tvData.shows.map((show: any) => ({
+                id: show.imdbID || show.id,
+                title: show.Title || show.title,
+                year: parseInt(show.Year || show.year) || 0,
+                poster: (show.Poster || show.poster) && (show.Poster || show.poster) !== 'N/A' 
+                  ? (show.Poster || show.poster) 
+                  : undefined,
+              }));
+            }
+          }
+        }
+      } catch (tvError: any) {
+        console.warn('TV show search error:', tvError?.message || tvError);
       }
       
       setSearchResults({
         games: gamesResults,
-        movies: moviesList.slice(0, 20),
-        tvShows: tvList.slice(0, 20),
+        movies: moviesList,
+        tvShows: tvList,
       });
     } catch (error) {
       console.error('Search error:', error);
-      setSearchResults({ games: [], movies: [], tvShows: [] });
     } finally {
       setSearchLoading(false);
     }
-  }, []);
+  };
 
-  const handleAddSearchItem = async (
+  const handleAddItem = async (
     itemType: 'game' | 'movie' | 'tv',
-    itemId: string,
+    externalId: string,
     itemName: string,
     itemCover?: string,
     itemYear?: number
@@ -332,7 +319,7 @@ export default function ListDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           itemType,
-          externalId: itemId,
+          externalId,
           itemName,
           itemCover,
           itemYear,
@@ -341,19 +328,11 @@ export default function ListDetailPage() {
 
       const data = await response.json();
       if (data.success) {
-        // Show notification
-        const notification = document.createElement('div');
-        notification.textContent = `✓ Added "${itemName}" to list!`;
-        notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; z-index: 9999; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-weight: 500;';
-        document.body.appendChild(notification);
-        setTimeout(() => {
-          notification.style.transition = 'opacity 0.3s';
-          notification.style.opacity = '0';
-          setTimeout(() => notification.remove(), 300);
-        }, 2000);
-        
-        loadList(); // Reload list to show new item
-        setSearchQuery(''); // Clear search
+        // Reload the list to show the new item
+        loadList();
+        // Clear search
+        setSearchQuery('');
+        setSearchResults({ games: [], movies: [], tvShows: [] });
       } else {
         alert(data.error || 'Failed to add item');
       }
@@ -363,79 +342,6 @@ export default function ListDetailPage() {
     }
   };
 
-  const getItemLink = (item: ListItem) => {
-    if (item.itemType === 'game' && item.externalGameId) {
-      return `/games/${item.externalGameId}`;
-    } else if (item.itemType === 'movie' && item.externalMovieId) {
-      return `/movies/${item.externalMovieId}`;
-    } else if (item.itemType === 'tv' && item.externalTvShowId) {
-      return `/tv/${item.externalTvShowId}`;
-    }
-    return '#';
-  };
-
-  const getRankingLabel = (position: number): string => {
-    const lastDigit = position % 10;
-    const lastTwoDigits = position % 100;
-
-    if (lastTwoDigits >= 11 && lastTwoDigits <= 13) {
-      return `${position}th`;
-    }
-
-    switch (lastDigit) {
-      case 1: return `${position}st`;
-      case 2: return `${position}nd`;
-      case 3: return `${position}rd`;
-      default: return `${position}th`;
-    }
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    const oldIndex = items.findIndex((item) => item.id === active.id);
-    const newIndex = items.findIndex((item) => item.id === over.id);
-
-    if (oldIndex === -1 || newIndex === -1) {
-      return;
-    }
-
-    // Update local state optimistically
-    const newItems = arrayMove(items, oldIndex, newIndex);
-    
-    // Update positions in the new order
-    const updatedItems = newItems.map((item, index) => ({
-      ...item,
-      position: index + 1,
-    }));
-    setItems(updatedItems);
-
-    // Send to server
-    try {
-      const itemIds = updatedItems.map((item) => item.id);
-      const response = await fetch(`/api/lists/${listId}/reorder`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ itemIds }),
-      });
-
-      if (!response.ok) {
-        // Revert on error
-        setItems(items);
-        throw new Error('Failed to reorder items');
-      }
-    } catch (error) {
-      console.error('Error reordering items:', error);
-      // Revert on error
-      setItems(items);
-    }
-  };
 
   if (loading) {
     return (
@@ -481,16 +387,6 @@ export default function ListDetailPage() {
                     className="w-full px-4 py-2 glass-strong rounded-xl text-sky-900 text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
                     placeholder="List Title"
                   />
-                  <select
-                    value={editForm.mediaType}
-                    onChange={(e) => setEditForm({ ...editForm, mediaType: e.target.value })}
-                    className="w-full px-4 py-2 glass-strong rounded-xl text-sky-900 focus:outline-none focus:ring-2 focus:ring-cyan-400/50"
-                  >
-                    <option value="">All Media Types</option>
-                    <option value="game">Video Games</option>
-                    <option value="movie">Movies</option>
-                    <option value="tv">TV Shows</option>
-                  </select>
                   <textarea
                     value={editForm.description}
                     onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
@@ -515,7 +411,10 @@ export default function ListDetailPage() {
                       Save
                     </button>
                     <button
-                      onClick={() => setEditing(false)}
+                      onClick={() => {
+                        setEditing(false);
+                        setShowAddItems(false);
+                      }}
                       className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-xl transition-all"
                     >
                       Cancel
@@ -525,11 +424,6 @@ export default function ListDetailPage() {
               ) : (
                 <>
                   <h1 className="text-4xl font-bold text-sky-800 mb-2">{list.title}</h1>
-                  {list.mediaType && (
-                    <p className="text-lg text-cyan-600 font-medium mb-2">
-                      {list.mediaType === 'game' ? 'Video Games' : list.mediaType === 'movie' ? 'Movies' : 'TV Shows'}
-                    </p>
-                  )}
                   {list.description && (
                     <p className="text-base text-sky-700 mb-4">{list.description}</p>
                   )}
@@ -546,23 +440,26 @@ export default function ListDetailPage() {
               )}
             </div>
             {isOwner && !editing && (
-              <button
-                onClick={() => setEditing(true)}
-                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-xl transition-all"
-              >
-                Edit
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setEditing(true);
+                    setShowAddItems(true);
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-xl transition-all"
+                >
+                  Edit
+                </button>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Add Items Search Interface - shown when editing */}
-        {isOwner && editing && (
+        {/* Add Items Interface */}
+        {isOwner && editing && showAddItems && (
           <div className="mb-8 glass-strong rounded-2xl p-6">
-            <h2 className="text-2xl font-bold text-sky-800 mb-4">Add Items to List</h2>
-            
-            {/* Search Bar */}
             <div className="mb-4">
+              <h2 className="text-2xl font-bold text-sky-800 mb-4">Add Items to List</h2>
               <input
                 type="text"
                 value={searchQuery}
@@ -582,6 +479,7 @@ export default function ListDetailPage() {
             {/* Tabs */}
             <div className="flex gap-2 mb-4">
               <button
+                type="button"
                 onClick={() => setSearchTab('games')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
                   searchTab === 'games'
@@ -592,6 +490,7 @@ export default function ListDetailPage() {
                 Games
               </button>
               <button
+                type="button"
                 onClick={() => setSearchTab('movies')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
                   searchTab === 'movies'
@@ -602,6 +501,7 @@ export default function ListDetailPage() {
                 Movies
               </button>
               <button
+                type="button"
                 onClick={() => setSearchTab('tv')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
                   searchTab === 'tv'
@@ -618,46 +518,48 @@ export default function ListDetailPage() {
               <div className="text-center py-8 text-sky-600">Searching...</div>
             ) : searchQuery.trim() ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-h-96 overflow-y-auto">
-                {searchTab === 'games' && searchResults.games.map((game) => (
-                  <div
-                    key={game.id}
-                    className="glass-strong rounded-xl overflow-hidden hover:shadow-xl transition-all"
-                  >
-                    <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 overflow-hidden relative">
-                      {game.cover?.image_id ? (
-                        <img
-                          src={getCoverImageUrl(game.cover.image_id, 'cover_big')}
-                          alt={game.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-sky-600 text-xs">
-                          No Cover
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <h4 className="font-semibold text-sky-800 text-sm mb-1 line-clamp-2">{game.name}</h4>
-                      {game.first_release_date && (
-                        <p className="text-xs text-sky-600 mb-2">
-                          {new Date(game.first_release_date * 1000).getFullYear()}
-                        </p>
-                      )}
-                      <button
-                        onClick={() => handleAddSearchItem(
-                          'game',
-                          game.id.toString(),
-                          game.name,
-                          game.cover?.image_id ? getCoverImageUrl(game.cover.image_id, 'cover_big') : undefined,
-                          game.first_release_date ? new Date(game.first_release_date * 1000).getFullYear() : undefined
+                {searchTab === 'games' && searchResults.games.map((game) => {
+                  const year = game.releaseDate ? new Date(game.releaseDate).getFullYear() : undefined;
+                  return (
+                    <div
+                      key={game.id}
+                      className="glass-strong rounded-xl overflow-hidden hover:shadow-xl transition-all"
+                    >
+                      <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 overflow-hidden relative">
+                        {game.cover ? (
+                          <img
+                            src={game.cover}
+                            alt={game.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-sky-600 text-xs">
+                            No Cover
+                          </div>
                         )}
-                        className="w-full px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white text-xs font-semibold rounded-lg transition-all"
-                      >
-                        Add to List
-                      </button>
+                      </div>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-sky-800 text-sm mb-1 line-clamp-2">{game.name}</h4>
+                        {year && (
+                          <p className="text-xs text-sky-600 mb-2">{year}</p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleAddItem(
+                            'game',
+                            game.id.toString(),
+                            game.name,
+                            game.cover,
+                            year
+                          )}
+                          className="w-full px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white text-xs font-semibold rounded-lg transition-all"
+                        >
+                          Add
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {searchTab === 'movies' && searchResults.movies.map((movie) => (
                   <div
                     key={movie.id}
@@ -680,7 +582,8 @@ export default function ListDetailPage() {
                       <h4 className="font-semibold text-sky-800 text-sm mb-1 line-clamp-2">{movie.title}</h4>
                       <p className="text-xs text-sky-600 mb-2">{movie.year}</p>
                       <button
-                        onClick={() => handleAddSearchItem(
+                        type="button"
+                        onClick={() => handleAddItem(
                           'movie',
                           movie.id,
                           movie.title,
@@ -689,7 +592,7 @@ export default function ListDetailPage() {
                         )}
                         className="w-full px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white text-xs font-semibold rounded-lg transition-all"
                       >
-                        Add to List
+                        Add
                       </button>
                     </div>
                   </div>
@@ -716,7 +619,8 @@ export default function ListDetailPage() {
                       <h4 className="font-semibold text-sky-800 text-sm mb-1 line-clamp-2">{show.title}</h4>
                       <p className="text-xs text-sky-600 mb-2">{show.year}</p>
                       <button
-                        onClick={() => handleAddSearchItem(
+                        type="button"
+                        onClick={() => handleAddItem(
                           'tv',
                           show.id,
                           show.title,
@@ -725,7 +629,7 @@ export default function ListDetailPage() {
                         )}
                         className="w-full px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white text-xs font-semibold rounded-lg transition-all"
                       >
-                        Add to List
+                        Add
                       </button>
                     </div>
                   </div>
@@ -734,13 +638,7 @@ export default function ListDetailPage() {
                   (searchTab === 'movies' && searchResults.movies.length === 0) ||
                   (searchTab === 'tv' && searchResults.tvShows.length === 0)) && (
                   <div className="col-span-full text-center py-8 text-sky-600">
-                    <p className="mb-2">No results found. Try a different search term.</p>
-                    {searchTab === 'games' && (
-                      <p className="text-sm text-sky-500">Note: Make sure TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET are set in your .env file to search for games.</p>
-                    )}
-                    {(searchTab === 'movies' || searchTab === 'tv') && (
-                      <p className="text-sm text-sky-500">Note: Make sure OMDB_API_KEY is set in your .env file to search for movies and TV shows.</p>
-                    )}
+                    No results found. Try a different search term.
                   </div>
                 )}
               </div>
@@ -756,51 +654,64 @@ export default function ListDetailPage() {
         {items.length === 0 ? (
           <div className="text-center py-12 glass-strong rounded-2xl">
             <p className="text-sky-700 text-lg font-medium mb-4">This list is empty.</p>
-            <p className="text-sky-600 mb-4">Add items to this list from game, movie, or TV show pages!</p>
-            <div className="flex gap-4 justify-center">
-              <Link
-                href="/games"
-                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-xl transition-all"
-              >
-                Browse Games
-              </Link>
-              <Link
-                href="/movies"
-                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-xl transition-all"
-              >
-                Browse Movies
-              </Link>
-              <Link
-                href="/tv"
-                className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold rounded-xl transition-all"
-              >
-                Browse TV Shows
-              </Link>
-            </div>
+            <p className="text-sky-600 mb-4">Add items when creating a list!</p>
           </div>
         ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={items.map(item => item.id)}
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {items.map((item, index) => (
-                  <SortableItem
-                    key={item.id}
-                    item={{ ...item, position: index + 1 }}
-                    isOwner={isOwner}
-                    onDelete={handleDeleteItem}
-                    getItemLink={getItemLink}
-                    getRankingLabel={getRankingLabel}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {items.map((item) => {
+              const getItemLink = () => {
+                if (item.itemType === 'game' && item.mediaId) {
+                  return `/games/${item.mediaId}`;
+                } else if (item.itemType === 'movie' && item.mediaId) {
+                  return `/movies/${item.mediaId}`;
+                } else if (item.itemType === 'tv' && item.mediaId) {
+                  return `/tv/${item.mediaId}`;
+                }
+                return '#';
+              };
+
+              const getDefaultPoster = () => 'https://via.placeholder.com/300x450?text=No+Poster';
+              const poster = itemDetails[item.id]?.cover || getDefaultPoster();
+              const year = itemDetails[item.id]?.year || item.year;
+
+              return (
+                <div key={item.id} className="group glass-strong rounded-2xl overflow-hidden hover:shadow-2xl transition-all transform hover:scale-105 relative">
+                  <Link href={getItemLink()}>
+                    <div className="aspect-[2/3] bg-gradient-to-br from-cyan-100 to-teal-100 overflow-hidden rounded-t-2xl">
+                      <img
+                        src={poster}
+                        alt={item.title || 'Item'}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-sky-800 mb-1 line-clamp-2 group-hover:text-cyan-600 transition-colors">
+                        {item.title || 'Untitled'}
+                      </h3>
+                      <div className="flex items-center justify-between text-sm text-sky-600">
+                        {year && <p>{year}</p>}
+                        {item.itemType && (
+                          <span className="text-xs bg-gradient-to-r from-cyan-500 to-teal-500 text-white px-2 py-1 rounded-full">
+                            {item.itemType === 'game' ? 'Game' : item.itemType === 'movie' ? 'Movie' : 'TV Show'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                  {isOwner && (
+                    <div className="px-4 pb-4">
+                      <button
+                        onClick={() => handleDeleteItem(item.id)}
+                        className="w-full px-3 py-1 bg-rose-500/20 text-rose-700 rounded-lg text-sm font-medium hover:bg-rose-500/30 transition-all"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         )}
 
         <div className="mt-8">

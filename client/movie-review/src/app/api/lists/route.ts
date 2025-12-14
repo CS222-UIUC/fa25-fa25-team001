@@ -17,9 +17,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, description, mediaType, isPublic } = body;
+    const { title, description, mediaType, isPublic, items } = body;
 
-    console.log('Creating list with data:', { title, description, mediaType, isPublic });
+    console.log('Creating list with data:', { title, description, mediaType, isPublic, itemsCount: items?.length || 0 });
 
     if (!title || !title.trim()) {
       return NextResponse.json(
@@ -33,6 +33,7 @@ export async function POST(request: NextRequest) {
       description: description?.trim(),
       mediaType: mediaType || null,
       isPublic: isPublic !== undefined ? isPublic : true,
+      items: items || [],
     });
 
     console.log('Create list result:', result);

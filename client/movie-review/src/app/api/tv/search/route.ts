@@ -28,19 +28,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Query parameter required' }, { status: 400 });
     }
 
-    const data = await searchMovies(query, page);
+    try {
+      const data = await searchMovies(query, page);
 
-    // Filter to only return TV shows (type='series')
-    const tvShowsOnly = (data.Search || []).filter((item: any) => item.Type === 'series');
+      // Filter to only return TV shows (type='series')
+      const tvShowsOnly = (data.Search || []).filter((item: any) => item.Type === 'series');
 
-    return NextResponse.json({ 
-      success: true, 
-      shows: tvShowsOnly,
-      totalResults: tvShowsOnly.length,
-      page 
-    });
+      return NextResponse.json({ 
+        success: true, 
+        shows: tvShowsOnly,
+        totalResults: tvShowsOnly.length,
+        page 
+      });
+    } catch (omdbError: any) {
+      // Handle "no results" as a valid response, not an error
+      if (omdbError?.message?.includes('not found') || omdbError?.message?.includes('Movie not found')) {
+        return NextResponse.json({ 
+          success: true, 
+          shows: [],
+          totalResults: 0,
+          page 
+        });
+      }
+      
+      // For API key errors, return empty results instead of error
+      if (omdbError?.message?.includes('API key not configured')) {
+        return NextResponse.json({ 
+          success: true, 
+          shows: [],
+          totalResults: 0,
+          page 
+        });
+      }
+      
+      throw omdbError;
+    }
   } catch (error: any) {
-    console.error('OMDB TV search error:', error);
+    console.error('TV show search error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to search TV shows' },
       { status: 500 }

@@ -4,50 +4,33 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { getUserProfile } from "@/actions/user";
-import { getMyReviews, getMyWatchlist } from "@/actions/media";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
-  const [profile, setProfile] = useState<{ name: string; email: string; image: string }>({
-    name: session?.user?.name || "",
-    email: session?.user?.email || "",
-    image: session?.user?.image || "/default.jpg",
-  });
-  const [recentReviews, setRecentReviews] = useState<Array<{ id: string; movieTitle: string; rating: number; comment: string; date: string }>>([]);
-  const [watchlistPreview, setWatchlistPreview] = useState<Array<{ id: string; title: string; year: number | null }>>([]);
+  const [username, setUsername] = useState<string>("");
 
-  // Load fresh profile/reviews/watchlist and subscribe to profile updates
+  // Load username
   useEffect(() => {
     let mounted = true;
     const load = async () => {
       try {
-        const [p, r, w] = await Promise.all([
-          getUserProfile(),
-          getMyReviews(),
-          getMyWatchlist(),
-        ]);
+        const p = await getUserProfile();
         if (!mounted) return;
         if ((p as any)?.success && (p as any).user) {
           const u = (p as any).user;
-          setProfile({ name: u.username, email: u.email, image: u.profilePicture || "/default.jpg" });
-        }
-        if ((r as any)?.reviews) {
-          setRecentReviews(((r as any).reviews as any[]).slice(0, 3));
-        }
-        if ((w as any)?.items) {
-          setWatchlistPreview(((w as any).items as any[]).slice(0, 3));
+          setUsername(u.username || "");
         }
       } catch {}
     };
-    load();
+    if (session) {
+      load();
+    }
 
     const onProfileUpdated = async () => {
       const res = await getUserProfile();
       if ((res as any)?.success && (res as any).user) {
         const u = (res as any).user;
-        // cache-bust image to avoid stale avatar
-        const img = (u.profilePicture || "/default.jpg") + `?t=${Date.now()}`;
-        setProfile({ name: u.username, email: u.email, image: img });
+        setUsername(u.username || "");
       }
     };
     window.addEventListener("profileUpdated", onProfileUpdated as EventListener);
@@ -55,7 +38,7 @@ export default function Dashboard() {
       mounted = false;
       window.removeEventListener("profileUpdated", onProfileUpdated as EventListener);
     };
-  }, [session?.user?.id]);
+  }, [session]);
 
   if (status === "loading") {
     return (
@@ -81,79 +64,64 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-300 via-cyan-200 to-teal-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent drop-shadow-md">Welcome to your Dashboard</h1>
-          <p className="text-sky-700 mt-2 font-medium">Manage your movie reviews and preferences</p>
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent drop-shadow-md">
+            Welcome, {username || "User"}
+          </h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Profile Card */}
-          <div className="glass-strong rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all">
-            <h2 className="text-sky-800 text-xl font-semibold mb-4">Profile</h2>
-            <div className="flex items-center space-x-4 mb-4">
-              <img src={profile.image || "/default.jpg"} alt="Profile" className="w-16 h-16 rounded-full ring-2 ring-cyan-300/50" />
-              <div>
-                <h3 className="text-sky-800 font-semibold">{profile.name}</h3>
-                <p className="text-sky-600 text-sm">{profile.email}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Movies Block */}
+          <Link
+            href="/movies"
+            className="group glass-strong rounded-3xl shadow-xl p-12 hover:shadow-2xl transition-all transform hover:scale-105"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-full bg-gradient-to-br from-red-400 to-pink-500 rounded-2xl flex items-center justify-center py-8 mb-6 group-hover:scale-105 transition-transform">
+                <h2 className="text-4xl font-bold text-white">Movies</h2>
               </div>
+              <p className="text-sky-600 text-lg">Search and discover movies</p>
             </div>
-            <Link
-              href="/user/profile"
-              className="bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-white font-semibold py-2 px-4 rounded-xl text-sm transition-all shadow-lg hover:shadow-xl glow-soft inline-block"
-            >
-              View Profile
-            </Link>
-          </div>
+          </Link>
 
-          {/* Recent Reviews Card */}
-          <div className="glass-strong rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all">
-            <h2 className="text-sky-800 text-xl font-semibold mb-4">Recent Reviews</h2>
-            {recentReviews.length === 0 ? (
-              <p className="text-sky-600">No reviews yet</p>
-            ) : (
-              <ul className="divide-y divide-white/20">
-                {recentReviews.map((r) => (
-                  <li key={r.id} className="py-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-sky-800">{r.movieTitle}</p>
-                        <p className="text-sm text-sky-600">{r.comment}</p>
-                      </div>
-                      <div className="text-amber-500 ml-4">{"⭐".repeat(r.rating)}</div>
-                    </div>
-                    <p className="text-xs text-sky-500 mt-1">{r.date}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-4 flex gap-2">
-              <Link href="/user/profile" className="bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-white font-semibold py-2 px-4 rounded-xl text-sm transition-all shadow-lg hover:shadow-xl glow-soft inline-block">
-                Write a Review
-              </Link>
+          {/* TV Shows Block */}
+          <Link
+            href="/tv"
+            className="group glass-strong rounded-3xl shadow-xl p-12 hover:shadow-2xl transition-all transform hover:scale-105"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-full bg-gradient-to-br from-purple-400 to-indigo-500 rounded-2xl flex items-center justify-center py-8 mb-6 group-hover:scale-105 transition-transform">
+                <h2 className="text-4xl font-bold text-white">TV Shows</h2>
+              </div>
+              <p className="text-sky-600 text-lg">Explore TV series and shows</p>
             </div>
-          </div>
+          </Link>
 
-          {/* Watchlist Card */}
-          <div className="glass-strong rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all">
-            <h2 className="text-sky-800 text-xl font-semibold mb-4">Watchlist</h2>
-            {watchlistPreview.length === 0 ? (
-              <p className="text-sky-600">Your watchlist is empty</p>
-            ) : (
-              <ul className="space-y-2">
-                {watchlistPreview.map((i) => (
-                  <li key={i.id} className="flex items-center justify-between text-sm">
-                    <span className="text-sky-800 font-medium">{i.title}</span>
-                    <span className="text-sky-600">{i.year ?? ""}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-4 flex gap-2">
-              <Link href="/user/profile" className="bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-300 hover:to-pink-300 text-white font-semibold py-2 px-4 rounded-xl text-sm transition-all shadow-lg hover:shadow-xl glow-soft inline-block">
-                Manage Watchlist
-              </Link>
+          {/* Games Block */}
+          <Link
+            href="/games"
+            className="group glass-strong rounded-3xl shadow-xl p-12 hover:shadow-2xl transition-all transform hover:scale-105"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-full bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center py-8 mb-6 group-hover:scale-105 transition-transform">
+                <h2 className="text-4xl font-bold text-white">Games</h2>
+              </div>
+              <p className="text-sky-600 text-lg">Browse video games</p>
             </div>
-          </div>
+          </Link>
+
+          {/* My Lists Block */}
+          <Link
+            href="/lists"
+            className="group glass-strong rounded-3xl shadow-xl p-12 hover:shadow-2xl transition-all transform hover:scale-105"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-full bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center py-8 mb-6 group-hover:scale-105 transition-transform">
+                <h2 className="text-4xl font-bold text-white">My Lists</h2>
+              </div>
+              <p className="text-sky-600 text-lg">Manage your custom lists</p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>
