@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import GoogleSignIn from '@/components/GoogleSignIn';
 
 export default function SignIn() {
   const [error, setError] = useState('');
@@ -47,62 +48,63 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8 pt-5">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-300 via-cyan-200 to-teal-300 px-4 sm:px-6 lg:px-8 pt-5">
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Welcome back! Enter your credentials to log into your account.
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <p className="text-red-500 text-center text-sm font-medium">
-              {error}
+        <div className="glass-strong rounded-3xl p-8 shadow-2xl">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent">
+              Sign in to your account
+            </h2>
+            <p className="mt-2 text-center text-sm text-sky-700 font-medium">
+              Welcome back! Enter your credentials to log into your account.
             </p>
-          )}
-
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 
-                           placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 
-                           focus:border-indigo-500 sm:text-sm"
-                placeholder="Email address"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 
-                           placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 
-                           focus:border-indigo-500 sm:text-sm"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
           </div>
+
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <p className="text-rose-600 text-center text-sm font-medium bg-rose-100/50 backdrop-blur-sm rounded-xl py-2">
+                {error}
+              </p>
+            )}
+
+            <div className="rounded-xl space-y-3">
+              <div>
+                <label htmlFor="email" className="sr-only">
+                  Email address
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="appearance-none relative block w-full px-4 py-3 glass-strong
+                             placeholder-sky-600/60 text-sky-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 
+                             focus:border-cyan-300 sm:text-sm transition-all"
+                  placeholder="Email address"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="sr-only">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="appearance-none relative block w-full px-4 py-3 glass-strong
+                             placeholder-sky-600/60 text-sky-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400/50 
+                             focus:border-cyan-300 sm:text-sm transition-all"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -110,11 +112,11 @@ export default function SignIn() {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-white/30 rounded"
               />
               <label
                 htmlFor="remember-me"
-                className="ml-2 block text-sm text-gray-900"
+                className="ml-2 block text-sm text-sky-800 font-medium"
               >
                 Remember me
               </label>
@@ -123,7 +125,7 @@ export default function SignIn() {
             <div className="text-sm">
               <a
                 href="#"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
+                className="font-medium text-cyan-600 hover:text-cyan-500 transition-colors"
               >
                 Forgot your password?
               </a>
@@ -134,9 +136,9 @@ export default function SignIn() {
             <button
               type="submit"
               disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium 
-                         rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 
-                         focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold 
+                         rounded-2xl text-white bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 focus:outline-none focus:ring-2 
+                         focus:ring-offset-2 focus:ring-cyan-400/50 transition-all shadow-lg hover:shadow-xl glow-soft
                          ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {loading ? 'Signing in...' : 'Sign in'}
@@ -144,17 +146,57 @@ export default function SignIn() {
           </div>
 
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-sky-700 font-medium">
               Don't have an account?{' '}
               <a
                 href="/auth/signup"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
+                className="font-semibold text-cyan-600 hover:text-cyan-500 transition-colors"
               >
                 Create account here
               </a>
             </p>
           </div>
         </form>
+
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-sky-300/50"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white/50 text-sky-700 font-medium">Or continue with</span>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <GoogleSignIn
+              onSuccess={async (profile) => {
+                try {
+                  setError('');
+                  setLoading(true);
+                  
+                  // Sign in with NextAuth using Google credentials
+                  const result = await signIn('google', {
+                    idToken: profile.idToken,
+                    redirect: false,
+                  });
+
+                  if (result?.error) {
+                    setError('Google sign-in failed. Please try again.');
+                  } else {
+                    router.push('/dashboard');
+                  }
+                } catch (err) {
+                  console.error('Google sign-in error:', err);
+                  setError('An error occurred during Google sign-in.');
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            />
+          </div>
+        </div>
+        </div>
       </div>
     </div>
   );

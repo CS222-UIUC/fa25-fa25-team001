@@ -23,6 +23,11 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // Favorites (max 5 each)
+  favoriteGames     Json?  // Array of { id, title, posterUrl, platform }
+  favoriteMovies    Json?  // Array of { id, title, posterUrl, year }
+  favoriteTvShows   Json?  // Array of { id, title, posterUrl, year }
+
   // Media consumption tracking
   moviesWatched     MovieWatched[]
   videoGamesPlayed  VideoGamePlayed[]
@@ -40,6 +45,9 @@ model User {
   movieRatings      MovieRating[]
   videoGameRatings  VideoGameRating[]
   tvShowRatings     TvShowRating[]
+
+  // Gaming platform connections
+  platformConnections  PlatformConnection[]
 
   @@map("users")
 }
@@ -106,6 +114,7 @@ model MovieWatched {
   watchedAt DateTime @default(now())
   rating    Int?     // 1-10 rating
   notes     String?
+  status    String?  // 'watched', 'dropped'
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
@@ -121,6 +130,7 @@ model VideoGamePlayed {
   playedAt  DateTime @default(now())
   rating    Int?     // 1-10 rating
   notes     String?
+  status    String?  // 'playing', 'have_played', 'completed', 'dropped', 'shelved'
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   videoGame VideoGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
@@ -136,6 +146,7 @@ model TvShowWatched {
   watchedAt DateTime @default(now())
   rating    Int?     // 1-10 rating
   notes     String?
+  status    String?  // 'watched', 'currently_watching', 'dropped'
 
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   tvShow    TvShow @relation(fields: [showId], references: [id], onDelete: Cascade)
@@ -148,7 +159,6 @@ model List {
   id          String   @id @default(cuid())
   title       String
   description String?
-  category    String?  // e.g., "Top 10 Movies with Best Soundtracks"
   isPublic    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -264,4 +274,25 @@ model TvShowRating {
 
   @@unique([userId, showId])
   @@map("tv_show_ratings")
+}
+
+model PlatformConnection {
+  id            String   @id @default(cuid())
+  platformType  String   // 'steam', 'xbox', 'playstation'
+  platformUserId String? // User's ID on the external platform
+  accessToken   String?  // OAuth token (encrypted in production)
+  refreshToken  String?  // OAuth refresh token (encrypted in production)
+  expiresAt     DateTime? // Token expiration
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Cached playtime data
+  lastSyncedAt  DateTime?
+  gamesData     Json?      // Store platform-specific game data
+
+  @@unique([userId, platformType])
+  @@map("platform_connections")
 }

@@ -1,99 +1,74 @@
 /**
- * HowLongToBeat API Integration
- * Uses the howlongtobeat npm package
+ * HowLongToBeat API Client for fetching game completion time data
  */
 
 import { HowLongToBeatService, HowLongToBeatEntry } from 'howlongtobeat';
 
-export interface GameCompletionTime {
-  name: string;
-  mainStory: number | null; // in hours
-  mainPlusExtra: number | null;
-  completionist: number | null;
-  allStyles: number | null;
-  gameplayMain: number | null;
-  gameplayMainExtra: number | null;
-  gameplayComplete: number | null;
-}
+let hltbService = new HowLongToBeatService();
 
-export class HowLongToBeatClient {
-  private service: HowLongToBeatService;
-
-  constructor() {
-    this.service = new HowLongToBeatService();
-  }
-
-  /**
-   * Search for a game and get completion times
-   */
-  async searchGame(gameName: string): Promise<GameCompletionTime[]> {
-    try {
-      const results = await this.service.search(gameName);
-      return this.mapResults(results);
-    } catch (error) {
-      console.error('HowLongToBeat API error:', error);
-      throw new Error(`Failed to search game: ${gameName}`);
+/**
+ * Search for a game on HowLongToBeat
+ */
+export async function searchGame(gameTitle: string): Promise<HowLongToBeatEntry[]> {
+  try {
+    // Add a small delay to avoid rate limiting
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const results = await hltbService.search(gameTitle);
+    return results;
+  } catch (error) {
+    // Log the error but don't throw - return empty array instead
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Check if it's a 403 or rate limit error
+    if (errorMessage.includes('403') || errorMessage.includes('Forbidden') || errorMessage.includes('rate limit')) {
+      console.warn(`HowLongToBeat rate limited or blocked for "${gameTitle}". This is normal - the service may have rate limits.`);
+    } else {
+      console.error('HowLongToBeat search error:', errorMessage);
     }
-  }
-
-  /**
-   * Get detailed completion data by game ID
-   */
-  async getGameDetails(gameId: string): Promise<GameCompletionTime | null> {
-    try {
-      const result = await this.service.detail(gameId);
-      return this.mapSingleResult(result);
-    } catch (error) {
-      console.error('HowLongToBeat API error:', error);
-      return null;
-    }
-  }
-
-  private mapResults(entries: HowLongToBeatEntry[]): GameCompletionTime[] {
-    return entries.map(entry => ({
-      name: entry.name,
-      mainStory: entry.gameplayMain || null,
-      mainPlusExtra: entry.gameplayMainExtra || null,
-      completionist: entry.gameplayComplete || null,
-      allStyles: entry.gameplayCompletionist || null,
-      gameplayMain: entry.gameplayMain || null,
-      gameplayMainExtra: entry.gameplayMainExtra || null,
-      gameplayComplete: entry.gameplayComplete || null,
-    }));
-  }
-
-  private mapSingleResult(entry: HowLongToBeatEntry | null): GameCompletionTime | null {
-    if (!entry) return null;
-
-    return {
-      name: entry.name,
-      mainStory: entry.gameplayMain || null,
-      mainPlusExtra: entry.gameplayMainExtra || null,
-      completionist: entry.gameplayComplete || null,
-      allStyles: entry.gameplayCompletionist || null,
-      gameplayMain: entry.gameplayMain || null,
-      gameplayMainExtra: entry.gameplayMainExtra || null,
-      gameplayComplete: entry.gameplayComplete || null,
-    };
-  }
-
-  /**
-   * Get estimated completion time for a game
-   * Returns the average of available completion times
-   */
-  static getAverageCompletionTime(gameData: GameCompletionTime): number | null {
-    const times = [
-      gameData.mainStory,
-      gameData.mainPlusExtra,
-      gameData.completionist,
-      gameData.allStyles,
-    ].filter((t): t is number => t !== null);
-
-    if (times.length === 0) return null;
-
-    return Math.round(times.reduce((a, b) => a + b, 0) / times.length);
+    
+    // Return empty array instead of throwing
+    return [];
   }
 }
 
-export const howlongtobeatClient = new HowLongToBeatClient();
+/**
+ * Get the best match for a game title
+ */
+export async function getGameTime(gameTitle: string): Promise<HowLongToBeatEntry | null> {
+  try {
+    const results = await searchGame(gameTitle);
+    if (results.length > 0) {
+      // Sort by similarity (highest first) to get the best match
+      // The first result is usually the best, but let's make sure
+      const sortedResults = [...results].sort((a, b) => {
+        const similarityA = a.similarity || 0;
+        const similarityB = b.similarity || 0;
+        return similarityB - similarityA;
+      });
+      
+      const bestMatch = sortedResults[0];
+      
+      // Log for debugging
+      console.log('HowLongToBeat search results:', {
+        query: gameTitle,
+        resultsCount: results.length,
+        bestMatch: {
+          name: bestMatch.name,
+          similarity: bestMatch.similarity,
+          gameplayMain: bestMatch.gameplayMain,
+          gameplayMainExtra: bestMatch.gameplayMainExtra,
+          gameplayCompletionist: bestMatch.gameplayCompletionist,
+        },
+      });
+      
+      return bestMatch;
+    }
+    return null;
+  } catch (error) {
+    // This should rarely happen now since searchGame doesn't throw
+    console.error('HowLongToBeat getGameTime error:', error);
+    return null;
+  }
+}
 

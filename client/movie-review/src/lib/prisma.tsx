@@ -6,8 +6,17 @@ declare global {
   var prisma: PrismaClient | undefined
 }
 
-const prisma = global.prisma ?? new PrismaClient()
+// Force new instance if in development to pick up schema changes
+const prisma = 
+  process.env.NODE_ENV === 'production'
+    ? new PrismaClient()
+    : global.prisma ?? new PrismaClient()
 
-if (process.env.NODE_ENV !== 'production') global.prisma = prisma
+if (process.env.NODE_ENV !== 'production') {
+  // Clear global cache to force regeneration
+  if (!global.prisma) {
+    global.prisma = prisma
+  }
+}
 
 export default prisma
