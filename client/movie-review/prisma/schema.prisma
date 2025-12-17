@@ -36,6 +36,8 @@ model User {
   // User-generated content
   lists             List[]
   reviews           Review[]
+  reviewLikes       ReviewLike[]
+  reviewComments    ReviewComment[]
 
   // Social features
   friends           UserFriend[] @relation("UserFriends")
@@ -195,7 +197,7 @@ model Review {
   id        String   @id @default(cuid())
   title     String?
   content   String
-  rating    Int      // 1-10 rating
+  rating    Float    // 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -211,7 +213,40 @@ model Review {
   videoGame VideoGame? @relation(fields: [videoGameId], references: [id], onDelete: Cascade)
   tvShow    TvShow?    @relation(fields: [tvShowId], references: [id], onDelete: Cascade)
 
+  // Social features
+  likes    ReviewLike[]
+  comments ReviewComment[]
+
   @@map("reviews")
+}
+
+model ReviewLike {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  reviewId  String
+
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review    Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reviewId])
+  @@map("review_likes")
+}
+
+model ReviewComment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  reviewId  String
+
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review    Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@map("review_comments")
 }
 
 model UserFriend {

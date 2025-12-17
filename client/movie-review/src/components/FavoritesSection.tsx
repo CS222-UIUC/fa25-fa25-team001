@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { getFavorites, updateFavoriteGames, updateFavoriteMovies, updateFavoriteTvShows } from '@/actions/favorites';
 import { rateGame, getUserGameRatings } from '@/actions/gameRatings';
 import { rateMovie, getUserMovieRatings } from '@/actions/movieRatings';
 import { rateTvShow, getUserTvShowRatings } from '@/actions/tvShowRatings';
+import StarRating from '@/components/StarRating';
 import Image from 'next/image';
 
 interface FavoriteGame {
@@ -31,124 +32,6 @@ interface FavoriteTvShow {
   tmdbId?: string;
 }
 
-interface StarRatingProps {
-  itemName: string;
-  currentRating: number | null;
-  onRate: (rating: number) => void;
-}
-
-function StarRating({ itemName, currentRating, onRate }: StarRatingProps) {
-  const [hoverRating, setHoverRating] = useState<number | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-    
-    const starContainer = containerRef.current.querySelector('div.flex');
-    if (!starContainer) return;
-    
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const starRect = starContainer.getBoundingClientRect();
-    
-    // Calculate relative to the star container, accounting for padding
-    const starX = e.clientX - starRect.left;
-    const starWidth = starRect.width;
-    
-    // Add padding area on both sides for easier 0.5 and 5.0 rating
-    const padding = starWidth * 0.1; // 10% padding on each side
-    const adjustedX = starX + padding;
-    const adjustedWidth = starWidth + (padding * 2);
-    
-    const starWidthEach = adjustedWidth / 5;
-    const starIndex = Math.floor(adjustedX / starWidthEach);
-    const positionInStar = (adjustedX % starWidthEach) / starWidthEach;
-    
-    const isHalfStar = positionInStar < 0.5;
-    const starValue = starIndex + 1;
-    const finalRating = isHalfStar ? starIndex + 0.5 : starValue;
-    
-    // Clamp between 0.5 and 5.0, ensuring we can easily reach both extremes
-    let clampedRating = Math.max(0.5, Math.min(5.0, finalRating));
-    
-    // Ensure we can reach 0.5 by checking if we're at the very left edge
-    if (starX < padding * 0.5) {
-      clampedRating = 0.5;
-    }
-    // Ensure we can reach 5.0 by checking if we're at the very right edge
-    if (starX > starWidth - padding * 0.5) {
-      clampedRating = 5.0;
-    }
-    
-    setHoverRating(clampedRating);
-  };
-
-  const handleMouseLeave = () => {
-    setHoverRating(null);
-  };
-
-  const handleClick = () => {
-    if (hoverRating !== null) {
-      onRate(hoverRating);
-    }
-  };
-
-  const displayRating = hoverRating !== null ? hoverRating : (currentRating || 0);
-
-  return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-30 cursor-pointer"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-    >
-      <div className="flex items-center gap-1 px-2" style={{ direction: 'ltr' }}>
-        {[1, 2, 3, 4, 5].map((star) => {
-          const starValue = star;
-          // Check if this star should be half-filled
-          const isHalfStar = displayRating >= starValue - 0.5 && displayRating < starValue;
-          // Check if this star should be fully filled
-          const isFullStar = displayRating >= starValue;
-          
-          return (
-            <div key={star} className="relative w-6 h-6">
-              {/* Empty star background - always visible */}
-              <svg
-                className="w-full h-full text-gray-400"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-              {/* Filled star overlay - half or full */}
-              {(isFullStar || isHalfStar) && (
-                <div
-                  className="absolute top-0 left-0 h-full w-full"
-                  style={{ 
-                    clipPath: isHalfStar ? 'inset(0 50% 0 0)' : 'none'
-                  }}
-                >
-                  <svg
-                    className="w-full h-full text-yellow-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      {currentRating && (
-        <div className="absolute bottom-4 text-white text-xs font-semibold">
-          Your rating: {currentRating.toFixed(1)} ⭐
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function FavoritesSection() {
   const [favorites, setFavorites] = useState<{
@@ -479,15 +362,14 @@ export default function FavoritesSection() {
                 )}
                 {/* Star Rating Overlay for all media types */}
                 <StarRating
-                  itemName={item.title}
-                  currentRating={
+                  rating={
                     type === 'games' 
-                      ? gameRatings[item.title] || null
+                      ? gameRatings[item.title] || 0
                       : type === 'movies'
-                      ? movieRatings[item.title] || null
-                      : tvShowRatings[item.title] || null
+                      ? movieRatings[item.title] || 0
+                      : tvShowRatings[item.title] || 0
                   }
-                  onRate={(rating) => {
+                  onRatingChange={(rating) => {
                     if (type === 'games') {
                       handleRateGame(item.title, rating);
                     } else if (type === 'movies') {
@@ -496,6 +378,8 @@ export default function FavoritesSection() {
                       handleRateTvShow(item.title, rating);
                     }
                   }}
+                  variant="overlay"
+                  size="md"
                 />
                 {/* Rating badge - top right corner */}
                 {((type === 'games' && gameRatings[item.title]) ||

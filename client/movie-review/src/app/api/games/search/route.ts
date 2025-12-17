@@ -92,17 +92,34 @@ export async function GET(request: NextRequest) {
     const games = await response.json();
 
     // Transform the data to make it easier to use
-    const transformedGames = games.map((game: any) => ({
-      id: game.id,
-      name: game.name,
-      cover: game.cover ? `https:${game.cover.url.replace('t_thumb', 't_cover_big')}` : null,
-      rating: game.rating ? (Math.round(Number(game.rating) * 10) / 10).toFixed(1) : null,
-      ratingCount: game.rating_count || 0,
-      releaseDate: game.first_release_date ? new Date(game.first_release_date * 1000).toISOString() : null,
-      platforms: game.platforms?.map((p: any) => p.name) || [],
-      genres: game.genres?.map((g: any) => g.name) || [],
-      summary: game.summary || null,
-    }));
+    const transformedGames = games.map((game: any) => {
+      let coverUrl: string | null = null;
+      if (game.cover) {
+        if (typeof game.cover === 'string') {
+          // If cover is already a URL string
+          coverUrl = game.cover.startsWith('http') ? game.cover : `https:${game.cover}`;
+        } else if (game.cover.url) {
+          // If cover is an object with url property
+          const url = game.cover.url.startsWith('//') ? `https:${game.cover.url}` : game.cover.url;
+          coverUrl = url.replace('t_thumb', 't_cover_big').replace('t_cover_small', 't_cover_big');
+        } else if (game.cover.image_id) {
+          // If cover is an object with image_id property
+          coverUrl = `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.cover.image_id}.jpg`;
+        }
+      }
+
+      return {
+        id: game.id,
+        name: game.name,
+        cover: coverUrl,
+        rating: game.rating ? (Math.round(Number(game.rating) * 10) / 10).toFixed(1) : null,
+        ratingCount: game.rating_count || 0,
+        releaseDate: game.first_release_date ? new Date(game.first_release_date * 1000).toISOString() : null,
+        platforms: game.platforms?.map((p: any) => p.name) || [],
+        genres: game.genres?.map((g: any) => g.name) || [],
+        summary: game.summary || null,
+      };
+    });
 
     return NextResponse.json({ success: true, games: transformedGames });
   } catch (error) {

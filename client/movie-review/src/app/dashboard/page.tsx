@@ -122,6 +122,19 @@ export default function Dashboard() {
               <p className="text-sky-600 text-lg">Manage your custom lists</p>
             </div>
           </Link>
+
+          {/* Reviews Block */}
+          <Link
+            href="/dashboard/reviews"
+            className="group glass-strong rounded-3xl shadow-xl p-12 hover:shadow-2xl transition-all transform hover:scale-105"
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-full bg-gradient-to-br from-blue-400 to-cyan-500 rounded-2xl flex items-center justify-center py-8 mb-6 group-hover:scale-105 transition-transform">
+                <h2 className="text-4xl font-bold text-white">Reviews</h2>
+              </div>
+              <p className="text-sky-600 text-lg">Share and read reviews</p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>
