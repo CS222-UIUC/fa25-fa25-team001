@@ -153,10 +153,24 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     // No special signIn callback required for credentials
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.image = user.image;
+      }
+      // Refresh profile picture from database on each request if token has an id
+      if (token.id && trigger !== 'signIn') {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { profilePicture: true },
+          });
+          if (dbUser?.profilePicture) {
+            token.image = dbUser.profilePicture;
+          }
+        } catch (error) {
+          console.error('Error fetching user profile picture:', error);
+        }
       }
       return token;
     },

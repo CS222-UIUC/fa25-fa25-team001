@@ -5,21 +5,23 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 
 export default function Header() {
-    const { data: session } = useSession();
+    const { data: session, update } = useSession();
     const [avatarOverride, setAvatarOverride] = useState<string | undefined>(undefined);
 
     // Listen for profile updates to refresh avatar immediately
     useEffect(() => {
-        const handler = (e: Event) => {
+        const handler = async (e: Event) => {
             const ce = e as CustomEvent<{ image?: string }>;
             if (ce.detail?.image) {
                 // Cache-bust
                 setAvatarOverride(`${ce.detail.image}?t=${Date.now()}`);
+                // Update the session to refresh the profile picture
+                await update();
             }
         };
         window.addEventListener('profileUpdated', handler as EventListener);
         return () => window.removeEventListener('profileUpdated', handler as EventListener);
-    }, []);
+    }, [update]);
 
     return (
         <header className="glass-strong sticky top-0 z-50 backdrop-blur-lg">
@@ -49,7 +51,13 @@ export default function Header() {
                                     <img
                                         src={avatarOverride || session.user?.image || '/default.jpg'}
                                         alt="Profile"
-                                        className="w-10 h-10 rounded-full cursor-pointer ring-2 ring-cyan-300/50 hover:ring-cyan-400/70 transition-all hover:scale-110"
+                                        className="w-10 h-10 rounded-full cursor-pointer ring-2 ring-cyan-300/50 hover:ring-cyan-400/70 transition-all hover:scale-110 object-cover"
+                                        onError={(e) => {
+                                            // Fallback to default if image fails to load
+                                            if (e.currentTarget.src !== '/default.jpg') {
+                                                e.currentTarget.src = '/default.jpg';
+                                            }
+                                        }}
                                     />
                                 </Link>
                             </>

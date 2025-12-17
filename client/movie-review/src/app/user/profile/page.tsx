@@ -133,8 +133,10 @@ export default function Profile() {
       if ((result as any)?.success) {
         setIsEditing(false);
         const u = (result as any).user;
-        setProfileData({ name: u.username, email: u.email, image: u.profilePicture || '' });
-        window.dispatchEvent(new CustomEvent('profileUpdated', { detail: { image: u.profilePicture } }));
+        const profilePicUrl = u.profilePicture || '';
+        setProfileData({ name: u.username, email: u.email, image: profilePicUrl });
+        // Dispatch event with the actual URL from database
+        window.dispatchEvent(new CustomEvent('profileUpdated', { detail: { image: profilePicUrl } }));
       } else if ((result as any)?.error) {
         alert((result as any).error || 'Failed to update profile');
       }
