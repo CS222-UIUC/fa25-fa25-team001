@@ -10,4 +10,12 @@
 
 - **Ben Estacio** – Frontend Engineer  
   Primary focus: Sign-in page, Media Search, Search Filtering
+- **Website Introduction**
+-Website to review, rank, and track statuses for various media such as video games, movies, and TV shows
+-Inspired by Letterboxd & Backloggd
+-Can search for media
+-Write lists
+-Interact with other users
+-Can connect to external gaming platforms such as Steam, Playstation, & Xbox
+-HowLongToBeat (Dropped)
 
