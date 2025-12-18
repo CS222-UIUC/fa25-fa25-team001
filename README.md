@@ -18,4 +18,15 @@
 -Interact with other users
 -Can connect to external gaming platforms such as Steam, Playstation, & Xbox
 -HowLongToBeat (Dropped)
+-**Summary Of Presentation**
+-Shanmukh did intro and demo, Basil did development problems, Aryan did backend technical architecture, Ben did frontend technical architecture
+-**Technical Architecture**
+  -next.js
+  -Postgre SQL
+  -nextauth.js
+-**Reproduction Infrastrucutre**
+  -git clone https://github.com/CS222-UIUC/fa25-fa25-team001.git
+  -git checkout Shanmukh
+  -npm install
+  -npm run dev
 
